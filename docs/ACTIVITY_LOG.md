@@ -41,8 +41,8 @@ Project activity history for the TTB Label Verification App. Maintained througho
 
 ## Current Project State
 
-**Phase:** Pre-implementation (planning and documentation complete)
-**Next step:** Plan step 2 -- scaffold Next.js app, install dependencies, set up folder structure
+**Phase:** Implementation (core engine built and validated)
+**Next step:** Plan step 4 -- field extraction (regex + heuristic parsing of OCR text into structured fields)
 **Plan reference:** `.cursor/plans/ttb_label_verification_app_cf38bd97.plan.md`
 
 ---
@@ -69,3 +69,37 @@ Project activity history for the TTB Label Verification App. Maintained througho
 - Full repo audit: verified all cross-references, replaced Python .gitignore, created .env.example
 
 **Next session:** Begin step 2 -- scaffold Next.js app with TypeScript, Tailwind CSS, shadcn/ui. Validate Tesseract.js OCR on generated test labels (step 3).
+
+### Session 2 -- `v0.2-scaffold-and-ocr`
+
+| | |
+|---|---|
+| **Date** | 2026-02-09 (Monday) |
+| **Time** | ~7:50 PM - 8:30 PM MST (~40 min) |
+| **Phase** | Implementation -- Steps 2 & 3 |
+| **Plan steps completed** | Step 2 (project init), Step 3 (OCR engine) |
+| **Commit** | `v0.2-scaffold-and-ocr` |
+
+**What was done:**
+- Scaffolded Next.js 16.1.6 with TypeScript, Tailwind CSS v4, App Router, src/ directory
+- Installed and configured: Tesseract.js, sharp, string-similarity-js, shadcn/ui (button, card, badge, progress, separator)
+- Configured next.config.ts for Turbopack (Next.js 16 default) + webpack fallback for Tesseract.js
+- Created complete TypeScript interfaces in `src/lib/types.ts` (OcrResult, ExtractedFields, FieldResult, ApplicationData, VerificationResult, API request/response types)
+- Set up full folder structure: `src/lib/ocr/`, `src/lib/extraction/`, `src/lib/verification/`, `src/app/api/` routes, `src/app/batch/`, `src/app/about/`
+- Built OCR engine (`src/lib/ocr/engine.ts`): persistent Tesseract.js worker pool (2 workers, scheduler pattern, singleton initialization)
+- Built image preprocessor (`src/lib/ocr/preprocessor.ts`): resize + grayscale + normalize + gentle sharpen
+- **Critical finding during testing:** CLAHE preprocessing destroyed OCR accuracy (16% confidence, garbage text). Removed CLAHE; light-touch pipeline (resize + grayscale + normalize) achieves 85-95% confidence.
+- Ran full OCR validation against all 5 test labels: **Risk #1 VALIDATED** (avg 85.6% confidence), **Assumption A2 VALIDATED** (max 990ms, well under 5s budget)
+- Verified production build passes (`next build` succeeds)
+- Zero linter errors across all new files
+
+**OCR test results (all PASS):**
+| Label | Confidence | Time | Key text extracted |
+|---|---|---|---|
+| compliant-label.png | 93% | 649ms | All fields correct |
+| wrong-abv.png | 91% | 623ms | "40% Alc./Vol." correctly captured |
+| missing-warning.png | 92% | 415ms | No warning text (correct) |
+| wrong-warning-case.png | 77% | 628ms | "Government Warning:" title case captured |
+| brand-case-mismatch.png | 75% | 990ms | "OLD TOM" and wine fields captured |
+
+**Next session:** Step 4 (field extraction) and step 5 (verification logic) -- parse OCR text into structured fields and build the comparison engine.

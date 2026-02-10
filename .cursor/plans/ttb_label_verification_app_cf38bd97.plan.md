@@ -4,10 +4,10 @@ overview: Build an AI-powered alcohol label verification web app using Next.js (
 todos:
   - id: project-init
     content: Initialize Next.js project with TypeScript, Tailwind CSS, shadcn/ui. Configure Tesseract.js webpack aliases in next.config.ts. Set up project structure (folders, types, .env.example).
-    status: pending
+    status: completed
   - id: ocr-engine
-    content: "Build the OCR engine: Tesseract.js worker pool manager (src/lib/ocr/engine.ts) + image preprocessing pipeline with sharp (grayscale, contrast, resize, sharpen) in src/lib/ocr/preprocessor.ts. Verify OCR works on a sample label image."
-    status: pending
+    content: "Build the OCR engine: Tesseract.js worker pool manager (src/lib/ocr/engine.ts) + image preprocessing pipeline with sharp (grayscale, normalize, sharpen) in src/lib/ocr/preprocessor.ts. Validated: 85.6% avg confidence, <1s processing."
+    status: completed
   - id: field-extraction
     content: "Build field extraction logic: parse raw OCR text into structured fields (brand name, class/type, ABV, net contents, government warning, producer info). Use regex patterns + heuristic parsing in src/lib/extraction/."
     status: pending

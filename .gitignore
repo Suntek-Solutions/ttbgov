@@ -54,3 +54,6 @@ Desktop.ini
 
 # Playwright MCP
 .playwright-mcp/
+
+# Tesseract.js language data (downloaded at runtime)
+*.traineddata
