@@ -15,8 +15,8 @@ todos:
     content: "Build verification engine: fuzzy matching, numeric normalization (ABV/volume), government warning validator (exact text + all caps check). All comparison strategies validated."
     status: completed
   - id: api-routes
-    content: "Build API routes: POST /api/extract (image upload -> OCR -> extracted fields), POST /api/verify (extracted fields + application data -> verification results). Wire up OCR engine + extraction + verification."
-    status: pending
+    content: "Build API routes: POST /api/extract, POST /api/verify, POST /api/batch. All tested and working. Fixed Tesseract.js Turbopack module resolution with explicit workerPath + serverExternalPackages."
+    status: completed
   - id: ui-single-label
     content: "Build the single-label verification UI: drag-and-drop image upload component, application data form, extracted fields display, verification results with color-coded pass/fail per field, confidence scores. Clean, accessible, large buttons."
     status: pending

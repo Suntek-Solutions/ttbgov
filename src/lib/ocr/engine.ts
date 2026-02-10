@@ -11,6 +11,7 @@
  */
 
 import { createWorker, createScheduler, type Worker, type Scheduler } from "tesseract.js";
+import { join } from "path";
 import type { OcrResult } from "@/lib/types";
 
 // ---------------------------------------------------------------------------
@@ -42,9 +43,23 @@ async function ensureInitialized(): Promise<Scheduler> {
 
       const newScheduler = createScheduler();
 
+      // Explicit worker path fixes Turbopack/Next.js module resolution issue
+      // See: https://github.com/naptha/tesseract.js/blob/master/docs/faq.md
+      const workerPath = join(
+        process.cwd(),
+        "node_modules",
+        "tesseract.js",
+        "src",
+        "worker-script",
+        "node",
+        "index.js"
+      );
+
       // Create workers in parallel for faster startup
       const workers: Worker[] = await Promise.all(
-        Array.from({ length: WORKER_COUNT }, () => createWorker(LANGUAGE))
+        Array.from({ length: WORKER_COUNT }, () =>
+          createWorker(LANGUAGE, 1, { workerPath })
+        )
       );
 
       for (const worker of workers) {

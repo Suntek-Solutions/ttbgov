@@ -41,8 +41,8 @@ Project activity history for the TTB Label Verification App. Maintained througho
 
 ## Current Project State
 
-**Phase:** Implementation (full processing pipeline built and validated)
-**Next step:** Plan step 6 -- API routes, then step 7 -- single-label verification UI
+**Phase:** Implementation (API routes complete, UI next)
+**Next step:** Plan step 7 -- single-label verification UI (shippable MVP)
 **Plan reference:** `.cursor/plans/ttb_label_verification_app_cf38bd97.plan.md`
 
 ---
@@ -138,3 +138,24 @@ Project activity history for the TTB Label Verification App. Maintained througho
 **Known limitation documented:** Brand names in decorative/stylized fonts are the weakest point. In the real app UI, the agent sees the raw OCR text and can manually verify brand names. The tool flags "could not extract" rather than false-passing.
 
 **Next session:** Step 6 (API routes) and step 7 (UI) -- wire up endpoints and build the single-label verification interface.
+
+### Session 4 -- `v0.4-api-routes`
+
+| | |
+|---|---|
+| **Date** | 2026-02-10 (Tuesday) |
+| **Phase** | Implementation -- Step 6 |
+| **Plan steps completed** | Step 6 (API routes) |
+| **Commit** | `v0.4-api-routes` |
+
+**What was done:**
+- Built `POST /api/extract` route: accepts multipart image upload, validates file type/size, runs preprocessing + OCR + field extraction, returns structured ExtractedFields JSON
+- Built `POST /api/verify` route: accepts extracted fields + application data JSON, runs field-by-field comparison, returns per-field pass/fail with confidence scores
+- Built `POST /api/batch` route: accepts multiple image uploads, processes in parallel batches of 3, returns extraction results per file
+- **Fixed Tesseract.js Turbopack issue:** Worker script path resolved to `C:\ROOT\` instead of project path. Fixed with explicit `workerPath` in createWorker() + added `tesseract.js` and `sharp` to `serverExternalPackages` in next.config.ts
+- Tested both `/api/extract` and `/api/verify` via curl against running dev server: both return correct JSON responses
+- Extract endpoint: 991ms for missing-warning.png, all fields correct
+- Verify endpoint: 1ms verification, correctly identifies missing government warning
+- Production build passes with all 3 routes showing as dynamic endpoints
+
+**Next session:** Step 7 -- single-label verification UI (the shippable MVP).
