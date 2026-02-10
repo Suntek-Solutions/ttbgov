@@ -109,10 +109,13 @@ sequenceDiagram
 
 ### `src/lib/types.ts`
 
-Shared TypeScript interfaces used across all modules:
+Shared TypeScript interfaces used across all modules (from `src/lib/types.ts`):
 
 ```typescript
-// Filled in during implementation -- skeleton below
+interface FieldResult {
+  value: string | null;
+  confidence: number;  // 0-1
+}
 
 interface ExtractedFields {
   brandName: FieldResult;
@@ -125,19 +128,32 @@ interface ExtractedFields {
   rawText: string;
 }
 
-interface FieldResult {
-  value: string | null;
-  confidence: number;  // 0-1
+interface ApplicationData {
+  brandName: string;
+  classType: string;
+  alcoholContent: string;
+  netContents: string;
+  governmentWarning: string;
+  producerInfo?: string;
+  countryOfOrigin?: string;
 }
 
-interface VerificationResult {
+type ComparisonMethod = "fuzzy" | "exact" | "numeric";
+
+interface FieldVerificationResult {
   field: string;
   extracted: string | null;
   expected: string;
   match: boolean;
   confidence: number;
-  method: 'fuzzy' | 'exact' | 'numeric';
+  method: ComparisonMethod;
   details: string;
+}
+
+interface VerificationResult {
+  overall: "pass" | "fail";
+  results: FieldVerificationResult[];
+  processingTimeMs: number;
 }
 ```
 
@@ -203,9 +219,37 @@ Accepts extracted fields + application data, returns verification results.
 
 ### `POST /api/batch`
 
-Accepts multiple images + application data, processes in parallel batches.
+Accepts multiple label images, processes them in parallel batches of 3, returns extraction results per file.
 
-> _Detailed request/response spec filled in during batch implementation_
+**Request:** `multipart/form-data` with multiple "images" file fields (max 50 files)
+
+**Response:**
+```json
+{
+  "success": true,
+  "results": [
+    {
+      "filename": "bourbon-label.png",
+      "extraction": {
+        "brandName": { "value": "OLD TOM DISTILLERY", "confidence": 0.74 },
+        "classType": { "value": "Kentucky Straight Bourbon Whiskey", "confidence": 0.83 },
+        "alcoholContent": { "value": "45% Alc./Vol.", "confidence": 0.87 },
+        "netContents": { "value": "750 mL", "confidence": 0.87 },
+        "governmentWarning": { "value": "GOVERNMENT WARNING: ...", "confidence": 0.85 },
+        "producerInfo": { "value": null, "confidence": 0 },
+        "countryOfOrigin": { "value": "Product of USA", "confidence": 0.83 },
+        "rawText": "..."
+      }
+    },
+    {
+      "filename": "wine-label.png",
+      "extraction": null,
+      "error": "Unsupported file type: application/pdf"
+    }
+  ],
+  "totalProcessingTimeMs": 2450
+}
+```
 
 ---
 
@@ -215,7 +259,7 @@ Accepts multiple images + application data, processes in parallel batches.
 |---|---|---|
 | Persistent Tesseract worker pool | Eliminate cold start | Workers load WASM + language data once on server boot (~3-5s). Subsequent requests skip this entirely. |
 | Image preprocessing before OCR | Reduce OCR processing time + improve accuracy | Grayscale + contrast + resize takes ~100-200ms but can cut OCR time significantly by providing cleaner input. |
-| Railway persistent server | Keep workers warm | Serverless (Vercel) spins down between requests, triggering cold starts. Railway keeps the process running. |
+| Azure Container Apps (always-on) | Keep workers warm | Serverless (Vercel) spins down between requests, triggering cold starts. Azure Container Apps keeps the process running. |
 | Parallel batch processing | Handle bulk uploads | Process 3-5 labels concurrently to balance throughput against memory constraints. |
 
 **Target:** Under 5 seconds end-to-end for single label verification (from image upload arrival to results display).
@@ -226,8 +270,8 @@ Accepts multiple images + application data, processes in parallel batches.
 
 ```mermaid
 flowchart LR
-    Browser["Agent's Browser"] -->|HTTPS| Railway["Railway\n(Node.js server)"]
-    Railway -->|Serves| NextApp["Next.js App\n(React UI + API)"]
+    Browser["Agent's Browser"] -->|HTTPS| AzureCA["Azure Container Apps\n(Docker container)"]
+    AzureCA -->|Serves| NextApp["Next.js App\n(React UI + API)"]
     NextApp -->|Uses locally| TessWorker["Tesseract.js\nWorker Pool"]
     NextApp -->|Uses locally| SharpLib["sharp\nImage Processing"]
 
@@ -237,7 +281,7 @@ flowchart LR
     end
 ```
 
-- **Single deployment** on Railway as a Docker container
+- **Single deployment** on Azure Container Apps as a Docker container
 - **No external service dependencies** at runtime
 - **No database** -- all processing is stateless and in-memory
 - **Dockerfile** uses multi-stage build for minimal image size

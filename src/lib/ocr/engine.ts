@@ -38,38 +38,47 @@ async function ensureInitialized(): Promise<Scheduler> {
   // Prevent multiple simultaneous initializations
   if (!initPromise) {
     initPromise = (async () => {
-      console.log(`[OCR Engine] Initializing ${WORKER_COUNT} Tesseract workers...`);
-      const start = performance.now();
+      try {
+        console.log(`[OCR Engine] Initializing ${WORKER_COUNT} Tesseract workers...`);
+        const start = performance.now();
 
-      const newScheduler = createScheduler();
+        const newScheduler = createScheduler();
 
-      // Explicit worker path fixes Turbopack/Next.js module resolution issue
-      // See: https://github.com/naptha/tesseract.js/blob/master/docs/faq.md
-      const workerPath = join(
-        process.cwd(),
-        "node_modules",
-        "tesseract.js",
-        "src",
-        "worker-script",
-        "node",
-        "index.js"
-      );
+        // Explicit worker path fixes Turbopack/Next.js module resolution issue
+        // See: https://github.com/naptha/tesseract.js/blob/master/docs/faq.md
+        const workerPath = join(
+          process.cwd(),
+          "node_modules",
+          "tesseract.js",
+          "src",
+          "worker-script",
+          "node",
+          "index.js"
+        );
 
-      // Create workers in parallel for faster startup
-      const workers: Worker[] = await Promise.all(
-        Array.from({ length: WORKER_COUNT }, () =>
-          createWorker(LANGUAGE, 1, { workerPath })
-        )
-      );
+        // Create workers in parallel for faster startup
+        const workers: Worker[] = await Promise.all(
+          Array.from({ length: WORKER_COUNT }, () =>
+            createWorker(LANGUAGE, 1, { workerPath })
+          )
+        );
 
-      for (const worker of workers) {
-        newScheduler.addWorker(worker);
+        for (const worker of workers) {
+          newScheduler.addWorker(worker);
+        }
+
+        scheduler = newScheduler;
+
+        const elapsed = Math.round(performance.now() - start);
+        console.log(`[OCR Engine] Ready. ${WORKER_COUNT} workers initialized in ${elapsed}ms`);
+      } catch (error) {
+        // Reset so next call retries initialization
+        initPromise = null;
+        console.error("[OCR Engine] Failed to initialize:", error);
+        throw new Error(
+          `OCR engine initialization failed: ${error instanceof Error ? error.message : "Unknown error"}`
+        );
       }
-
-      scheduler = newScheduler;
-
-      const elapsed = Math.round(performance.now() - start);
-      console.log(`[OCR Engine] Ready. ${WORKER_COUNT} workers initialized in ${elapsed}ms`);
     })();
   }
 

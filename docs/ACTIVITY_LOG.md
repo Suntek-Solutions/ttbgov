@@ -12,7 +12,7 @@ Project activity history for the TTB Label Verification App. Maintained througho
 
 - **2026-02-09 ~5:15 PM** -- Converted PDF spec to markdown and broke it into focused reference documents in `docs/spec/`: interviews, requirements, sample label, deliverables, and evaluation criteria. Organized for quick lookup during development.
 
-- **2026-02-09 ~5:30 PM** -- Created full project plan (`.cursor/plans/ttb_label_verification_app_cf38bd97.plan.md`). Read every stakeholder interview line by line and extracted implicit requirements, constraints, and preferences. Key architecture decisions: Next.js (TypeScript) full-stack, Tesseract.js for local OCR (no cloud API dependencies), Railway for persistent-server deployment, shadcn/ui + Tailwind for accessible UI. 11-step implementation sequence designed to front-load risk validation.
+- **2026-02-09 ~5:30 PM** -- Created full project plan (`.cursor/plans/ttb_label_verification_app_cf38bd97.plan.md`). Read every stakeholder interview line by line and extracted implicit requirements, constraints, and preferences. Key architecture decisions: Next.js (TypeScript) full-stack, Tesseract.js for local OCR (no cloud API dependencies), Azure Container Apps for persistent deployment, shadcn/ui + Tailwind for accessible UI. 11-step implementation sequence designed to front-load risk validation.
 
 - **2026-02-09 ~6:00 PM** -- Created internal planning documents in `docs/considerations/`:
   - `rationale.md` -- Maps every stakeholder quote to a design decision. Covers the full decision tree: OCR engine (4 options evaluated), tech stack (4 options), deployment platform, matching strategy, image preprocessing.
@@ -26,11 +26,11 @@ Project activity history for the TTB Label Verification App. Maintained througho
 
 - **2026-02-09 ~7:00 PM** -- Set up AI tooling for the build. Evaluated available MCP servers and documented usage in `.cursor/rules/mcp-servers.mdc`. Resolved Context7 library IDs for all 6 stack libraries so documentation lookups are instant during coding. Key servers: Context7 (docs), Playwright (UI testing), 21st.dev Magic (component generation), Next.js DevTools (to add when dev server is running).
 
-- **2026-02-09 ~7:30 PM** -- Final audit and first commit. Verified all cross-references across 18 files. Replaced Python `.gitignore` with Node.js/Next.js version. Created `.env.example`. Committed all 20 files as project foundation.
-
 - **2026-02-09 ~7:15 PM** -- Expanded test label strategy and sourced initial reference data. Discovered TTB has a free Public COLA Registry with real approved label images (no login required). Plan now sources test labels from 3 places: (1) real labels from COLA registry, (2) AI-generated controlled pass/fail scenarios, (3) degraded images for preprocessing stress tests. Organized into `public/test-labels/real/`, `generated/`, `degraded/` with a README per folder. Updated plan, APPROACH.md, and README. Browsed the TTB Public COLA Registry and recorded real COLA application data for 3 approved bourbon labels (Trail View Whiskey, Kalifornia Distilleries, Belle Isle) with full field details and registry URLs. Created `public/test-labels/` folder structure (`real/`, `generated/`, `degraded/`) with a README documenting all test cases, expected results, and reference COLA data. Also fixed: marked documentation-init step as completed in plan, softened considerations/README.md language.
 
-- **2026-02-09 ~7:30 PM** -- Generated 5 AI test label images and placed in `public/test-labels/generated/`:
+- **2026-02-09 ~7:30 PM** -- Final audit, created `.env.example`, replaced Python `.gitignore`, and committed project foundation.
+
+- **2026-02-09 ~7:35 PM** -- Generated 5 AI test label images and placed in `public/test-labels/generated/`:
   - `compliant-label.png` -- Old Tom Distillery bourbon, all fields correct (should pass all checks)
   - `wrong-abv.png` -- Stone's Throw bourbon, label shows 40% but application will say 45% (should fail ABV)
   - `wrong-warning-case.png` -- Copper Ridge rye, "Government Warning" in title case not all caps (should fail warning)
@@ -41,8 +41,8 @@ Project activity history for the TTB Label Verification App. Maintained througho
 
 ## Current Project State
 
-**Phase:** Complete -- all 11 plan steps done. Ready for Railway deployment by Scott.
-**Next step:** Scott deploys to Railway and adds the live URL to README.md
+**Phase:** Complete -- all 11 plan steps done. Ready for Azure deployment by Scott.
+**Next step:** Scott runs `./scripts/deploy-azure.sh` and adds the live URL to README.md
 **Plan reference:** `.cursor/plans/ttb_label_verification_app_cf38bd97.plan.md`
 
 ---
@@ -144,6 +144,7 @@ Project activity history for the TTB Label Verification App. Maintained througho
 | | |
 |---|---|
 | **Date** | 2026-02-10 (Tuesday) |
+| **Time** | Continuation session |
 | **Phase** | Implementation -- Step 6 |
 | **Plan steps completed** | Step 6 (API routes) |
 | **Commit** | `v0.4-api-routes` |
@@ -220,8 +221,23 @@ Project activity history for the TTB Label Verification App. Maintained througho
 - Final documentation pass: filled all tool versions in APPROACH.md (Next.js 16.1.6, React 19.2.3, Tesseract.js 7.0.0, sharp 0.34.5, etc.), updated README git clone URL
 - All 11 plan steps marked complete
 
-**All plan steps are complete.** The app is ready for Railway deployment. Scott needs to:
+**All plan steps are complete.** The app is ready for Azure deployment. Scott needs to:
 1. Push to GitHub
-2. Connect the repo to Railway
-3. Deploy
-4. Add the live URL to README.md
+2. Run `./scripts/deploy-azure.sh`
+3. Add the live URL to README.md
+
+### Session 8 -- Azure deployment config
+
+| | |
+|---|---|
+| **Date** | 2026-02-10 (Tuesday) |
+| **Time** | Continuation session |
+| **Phase** | Deployment configuration |
+| **Commit** | `v0.8-azure-deploy` |
+
+**What was done:**
+- Evaluated hosting options (Railway, Render, Azure). Chose Azure Container Apps: Scott already has a full Azure account, aligns with TTB's Azure infrastructure (Marcus's interview), always-on with no cold start.
+- Created `scripts/deploy-azure.sh`: fully config-driven Azure CLI deployment script (6 steps: resource group, ACR, Docker build+push, Container Apps environment, deploy, get URL). All values overridable via environment variables.
+- Updated Dockerfile comment to be platform-agnostic (works on Azure, Railway, Render, or any Docker host)
+- Updated README: deployment section with Azure primary + Docker fallback instructions, tech stack table updated
+- Updated APPROACH.md: deployment references updated to Azure Container Apps

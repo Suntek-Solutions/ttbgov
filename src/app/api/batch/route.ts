@@ -71,6 +71,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<BatchResp
       return NextResponse.json(
         {
           success: false,
+          error: "No image files provided. Send files with field name 'images'.",
           results: [],
           totalProcessingTimeMs: Math.round(performance.now() - start),
         },
@@ -82,6 +83,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<BatchResp
       return NextResponse.json(
         {
           success: false,
+          error: `Too many files: ${files.length}. Maximum: ${MAX_FILES} per batch.`,
           results: [],
           totalProcessingTimeMs: Math.round(performance.now() - start),
         },

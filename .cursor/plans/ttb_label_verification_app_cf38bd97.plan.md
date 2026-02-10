@@ -30,10 +30,10 @@ todos:
     content: "Create skeleton README.md, docs/APPROACH.md, docs/ARCHITECTURE.md as living documents BEFORE coding begins. Fill in what we already know (stack, rationale, architecture diagram, stakeholder traceability). Update these throughout the build."
     status: completed
   - id: documentation-final
-    content: "Final documentation pass: filled APPROACH.md tool versions, updated README git clone URL. Deployed URL to be added after Railway deployment by Scott."
+    content: "Final documentation pass: filled APPROACH.md tool versions, updated README git clone URL. Deployed URL to be added after Azure deployment by Scott."
     status: completed
   - id: deploy
-    content: "Dockerfile created (multi-stage, node:20-slim). Standalone output enabled. Ready for Railway deployment -- Scott to deploy and add URL to README."
+    content: "Dockerfile created (multi-stage, node:20-slim). Standalone output enabled. Azure deployment script created. Ready for deployment -- Scott to run deploy-azure.sh and add URL to README."
     status: completed
 isProject: false
 ---
@@ -42,14 +42,14 @@ isProject: false
 
 ## Stack Decision
 
-**Next.js 14+ (TypeScript) full-stack, deployed to Railway**
+**Next.js 16 (TypeScript) full-stack, deployed to Azure Container Apps**
 
 - **Frontend**: React + Tailwind CSS + shadcn/ui (clean, accessible, "something my mother could figure out")
 - **Backend**: Next.js API Routes (server-side processing)
 - **OCR Engine**: Tesseract.js (latest) -- runs **locally on the server**, zero cloud API calls
 - **Image Processing**: sharp (fast Node.js native image manipulation)
 - **Fuzzy Matching**: string-similarity + custom logic (handles Dave's 'STONE'S THROW' vs 'Stone's Throw' scenario)
-- **Deployment**: Railway (persistent Node.js server -- enables Tesseract worker reuse for speed)
+- **Deployment**: Azure Container Apps (persistent container -- enables Tesseract worker reuse for speed, aligns with TTB's Azure infrastructure)
 
 ### Why This Stack
 
@@ -57,7 +57,7 @@ isProject: false
 - **Single codebase, single deployment** -- simpler to review, simpler to run. Evaluators get one URL.
 - **TypeScript** -- type safety, self-documenting code, shows code quality (evaluation criterion).
 - **shadcn/ui + Tailwind** -- accessible components out of the box, professional look, responsive. Half the team is 50+ (Sarah's benchmark).
-- **Railway over Vercel** -- persistent server means Tesseract workers stay warm (~1s OCR vs ~5s cold start). Meets the 5-second SLA Sarah demanded.
+- **Azure Container Apps over Vercel** -- persistent container means Tesseract workers stay warm (~1s OCR vs ~5s cold start). Meets the 5-second SLA Sarah demanded. Aligns with TTB's Azure infrastructure.
 
 ---
 
@@ -182,7 +182,7 @@ ttbgov/
 ├── tailwind.config.ts
 ├── tsconfig.json
 ├── package.json
-├── Dockerfile                         # For Railway deployment
+├── Dockerfile                         # For container deployment (Azure, Railway, etc.)
 └── README.md                          # Comprehensive project documentation
 ```
 
@@ -289,11 +289,12 @@ Each test label will have a corresponding expected result documented in `public/
 
 ## Deployment Plan
 
-- **Platform**: Railway (free tier, persistent Node.js server)
+- **Platform**: Azure Container Apps (persistent container, aligns with TTB's Azure infrastructure)
 - **Build**: `npm run build` produces optimized Next.js production build
-- **Dockerfile**: Multi-stage build for minimal image size
-- **URL**: Will be a `*.up.railway.app` URL shared with evaluators
-- **Alternative**: If Railway has issues, Render.com as fallback (same approach)
+- **Dockerfile**: Multi-stage build for minimal image size (platform-agnostic)
+- **Deploy script**: `scripts/deploy-azure.sh` (config-driven, all values overridable via env vars)
+- **URL**: Will be a `*.azurecontainerapps.io` URL shared with evaluators
+- **Alternative**: Dockerfile works on any Docker host (Railway, Render, AWS, etc.)
 
 ---
 
@@ -310,5 +311,5 @@ The work is sequenced so we always have a working app, adding features increment
 7. **UI (single label)** -- Upload, form, results. **Shippable MVP after this step.**
 8. **UI (batch)** -- Multi-file upload, progress, summary table.
 9. **Test labels** -- Create 4-5 test images covering pass/fail scenarios.
-10. **Deploy** -- Dockerfile, Railway, verify live URL. **Validate risks #2, #7, #10 here.**
+10. **Deploy** -- Dockerfile, Azure Container Apps, verify live URL. **Validate risks #2, #10 here.**
 11. **Documentation final** -- Screenshots, deployed URL, polish all docs.

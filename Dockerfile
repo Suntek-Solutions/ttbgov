@@ -1,5 +1,6 @@
 # Multi-stage Dockerfile for TTB Label Verification App
-# Optimized for Railway deployment with Tesseract.js + sharp
+# Platform-agnostic: works on Azure Container Apps, Railway, Render, or any Docker host
+# Optimized for Tesseract.js + sharp (OCR processing)
 
 # --- Stage 1: Dependencies ---
 FROM node:20-slim AS deps

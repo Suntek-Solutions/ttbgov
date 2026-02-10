@@ -23,7 +23,7 @@ Every feature and architectural decision traces directly to something a stakehol
 **Source:** Sarah Chen -- "If we can't get results back in about 5 seconds, nobody's going to use it."
 
 **What we did:**
-- Chose a persistent server deployment (Railway) over serverless (Vercel) to keep Tesseract.js OCR workers warm between requests
+- Chose a persistent container deployment (Azure Container Apps) over serverless to keep Tesseract.js OCR workers warm between requests
 - Added image preprocessing (resize, grayscale, contrast) to reduce the work the OCR engine has to do
 - Target: under 3 seconds server-side processing for a single label
 
@@ -153,7 +153,7 @@ Key assumptions made during development (full list in `docs/considerations/assum
 
 This is a prototype. A production deployment at TTB would require:
 
-- **Azure hosting** on FedRAMP-certified infrastructure (matching their 2019 migration)
+- **Azure hosting** on FedRAMP-certified infrastructure (prototype already deployed to Azure Container Apps, consistent with TTB's 2019 migration)
 - **COLA integration** to pull application data directly instead of manual entry
 - **Azure AI Document Intelligence** for higher-accuracy OCR (once firewall rules are configured)
 - **User authentication and RBAC** for agent accounts

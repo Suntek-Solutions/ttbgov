@@ -8,7 +8,7 @@ Built as a standalone prototype for the Alcohol and Tobacco Tax and Trade Bureau
 
 ## Live Demo
 
-> **Deployed URL:** _Coming after deployment step_
+> **Deployed URL:** _Pending Azure deployment -- run `./scripts/deploy-azure.sh` to deploy_
 
 ---
 
@@ -70,8 +70,8 @@ A compliance agent reviews ~150,000 label applications per year. Each review inv
 | UI | React + Tailwind CSS + shadcn/ui | Accessible, clean, responsive -- usable by non-technical staff |
 | OCR | Tesseract.js | Local OCR engine, no cloud API calls, works behind firewalls |
 | Image Processing | sharp | Fast native Node.js image manipulation for preprocessing |
-| Fuzzy Matching | string-similarity | Case/punctuation-normalized comparison with confidence scores |
-| Deployment | Railway | Persistent server keeps OCR workers warm for fast responses |
+| Fuzzy Matching | string-similarity-js | Case/punctuation-normalized comparison with confidence scores |
+| Deployment | Azure Container Apps | Persistent container, always-on, aligns with TTB's Azure infrastructure |
 
 ### Why Local OCR Instead of Cloud AI?
 
@@ -101,7 +101,7 @@ ttbgov/
 
 ## Screenshots
 
-> _Added after UI is built_
+> Screenshots will be added after deployment. To preview locally, run `npm run dev` and open http://localhost:3000.
 
 ---
 
@@ -119,6 +119,37 @@ ttbgov/
 - **No persistent storage** -- Labels and results are processed in-memory. Nothing is stored between sessions.
 - **English labels only** -- TTB labels are English. Multi-language OCR is not included to keep the deployment lightweight.
 - **Government warning validation** -- Uses a high-threshold fuzzy match on the body text to account for minor OCR artifacts while keeping the "GOVERNMENT WARNING:" prefix check strict.
+
+---
+
+## Deployment
+
+### Azure Container Apps (primary)
+
+Deployed to Azure Container Apps, consistent with TTB's existing Azure infrastructure. The deployment is fully config-driven via `scripts/deploy-azure.sh`:
+
+```bash
+# Login to Azure (if not already)
+az login
+
+# Deploy (all config via environment variables with sensible defaults)
+./scripts/deploy-azure.sh
+```
+
+Override any default with environment variables:
+
+```bash
+AZURE_RESOURCE_GROUP=my-group AZURE_LOCATION=westus ./scripts/deploy-azure.sh
+```
+
+### Docker (run anywhere)
+
+The app ships as a standard Docker container. Deploy to any platform that runs Docker:
+
+```bash
+docker build -t ttb-label-verification .
+docker run -p 3000:3000 ttb-label-verification
+```
 
 ---
 

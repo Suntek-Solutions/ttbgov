@@ -49,7 +49,19 @@ const MIN_WIDTH = 600;
 export async function preprocessImage(imageBuffer: Buffer): Promise<Buffer> {
   const start = performance.now();
 
-  const metadata = await sharp(imageBuffer).metadata();
+  if (!imageBuffer || imageBuffer.length === 0) {
+    throw new Error("Empty image buffer provided to preprocessor");
+  }
+
+  let metadata;
+  try {
+    metadata = await sharp(imageBuffer).metadata();
+  } catch (error) {
+    throw new Error(
+      `Failed to read image: ${error instanceof Error ? error.message : "Unsupported or corrupt image format"}`
+    );
+  }
+
   const inputWidth = metadata.width ?? 0;
 
   let pipeline = sharp(imageBuffer);

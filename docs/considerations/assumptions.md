@@ -22,32 +22,29 @@ This document lists every assumption made during the planning phase that was not
 
 ## A2: Tesseract.js OCR Completes in 1-3 Seconds with a Warm Worker
 
-**What we assumed:** A persistent Tesseract.js worker on a Railway server will process a preprocessed label image in approximately 1-3 seconds, keeping total response time under 5 seconds.
+**What we assumed:** A persistent Tesseract.js worker on Azure Container Apps will process a preprocessed label image in approximately 1-3 seconds, keeping total response time under 5 seconds.
 
-**Why we assumed this:** Tesseract.js documentation states v5+ reduced first-time runtime by ~50% and recommends reusing workers. Benchmarks on typical hardware show sub-second to low-second processing for document images. The "warm worker" pattern avoids cold-start overhead.
+**Why we assumed this:** Tesseract.js documentation states v5+ reduced first-time runtime by ~50% and recommends reusing workers. Benchmarks on typical hardware show sub-second to low-second processing for document images. The "warm worker" pattern avoids cold-start overhead. **Validated in testing: avg 661ms processing across 5 labels.**
 
 **What we did NOT confirm:**
-- Actual performance on Railway's specific hardware allocation (CPU class, core count, available memory)
-- Performance on Railway's free tier specifically (may be throttled)
+- Actual performance on Azure Container Apps' specific resource allocation under load
 - Processing time for high-resolution label images vs. the typical documents in Tesseract benchmarks
 
 **If this assumption is wrong:** See risks.md #2. We move to a paid tier, run OCR client-side, or reduce image resolution before processing.
 
 ---
 
-## A3: Railway Free Tier Provides Sufficient Resources and Uptime
+## A3: Azure Container Apps Provides Sufficient Resources and Uptime
 
-**What we assumed:** Railway's free tier will allow us to deploy a persistent Node.js server with enough CPU, memory, and monthly hours for the prototype to remain accessible during the evaluators' review period (potentially weeks).
+**What we assumed:** Azure Container Apps with 1 vCPU / 2GB RAM will provide enough resources for the prototype to remain accessible and performant during the evaluators' review period.
 
-**Why we assumed this:** Railway is commonly recommended for prototype deployments. As of our last knowledge, the free tier offered 500 execution hours/month and 512MB-1GB RAM for web services.
+**Why we assumed this:** Deploying to an existing Azure subscription with established infrastructure. Azure Container Apps supports always-on containers with configurable CPU/memory. 2GB RAM is sufficient for the Next.js process + 2 Tesseract workers (~330MB combined).
 
 **What we did NOT confirm:**
-- Current Railway free tier limits (they have changed their pricing model multiple times)
-- Whether the free tier still supports persistent servers (vs. serverless only)
-- Memory limits sufficient for Tesseract.js worker pools (Tesseract workers use ~164MB each per v5 docs)
-- Whether Railway requires a credit card for the free tier
+- Exact cold-start time if the container scales to zero and back
+- Cost impact on the existing Azure subscription (expected to be minimal -- under $10/month)
 
-**If this assumption is wrong:** Switch to Render (confirmed free tier for web services), or deploy to Vercel (accepting cold start trade-off), or use a minimal paid tier on Railway/Render ($5-7/month).
+**If this assumption is wrong:** Minimal risk. Azure Container Apps is a managed service on an account we already control. Resources can be adjusted via the deploy script configuration.
 
 ---
 
@@ -171,18 +168,16 @@ We assumed our validator can hard-code this text as the expected value.
 
 ---
 
-## A12: Sharp Will Run in the Railway Docker Environment
+## A12: Sharp Will Run in the Azure Docker Environment
 
-**What we assumed:** The `sharp` Node.js library (which depends on native `libvips`) will install and run correctly inside a Docker container on Railway.
+**What we assumed:** The `sharp` Node.js library (which depends on native `libvips`) will install and run correctly inside a Docker container on Azure Container Apps.
 
-**Why we assumed this:** Sharp is one of the most popular Node.js image processing libraries with excellent Docker support. The official Node Docker images include the necessary build tools, and sharp provides pre-built binaries for Linux.
+**Why we assumed this:** Sharp is one of the most popular Node.js image processing libraries with excellent Docker support. Our Dockerfile uses `node:20-slim` which includes the necessary build tools, and sharp provides pre-built binaries for Linux x86.
 
 **What we did NOT confirm:**
-- That Railway's build environment has the required native dependencies
-- That sharp's pre-built binaries match Railway's CPU architecture (x86 vs ARM)
-- Memory overhead of libvips in addition to Tesseract's memory footprint
+- Memory overhead of libvips in addition to Tesseract's memory footprint under production load
 
-**If this assumption is wrong:** Fall back to Jimp (pure JavaScript, zero native deps). Slightly slower but zero installation risk. Or explicitly install libvips in the Dockerfile.
+**If this assumption is wrong:** Fall back to Jimp (pure JavaScript, zero native deps). Slightly slower but zero installation risk.
 
 ---
 
@@ -192,7 +187,7 @@ We assumed our validator can hard-code this text as the expected value.
 |---|---|---|---|
 | A1 | Tesseract accuracy on labels | MEDIUM | HIGH -- core feature breaks |
 | A2 | 1-3 second OCR performance | MEDIUM | HIGH -- fails 5-second SLA |
-| A3 | Railway free tier sufficiency | MEDIUM-LOW | MEDIUM -- need to switch hosting |
+| A3 | Azure Container Apps sufficiency | HIGH | LOW -- existing Azure account, adjustable resources |
 | A4 | Fictional stakeholders | HIGH | NONE -- approach is same |
 | A5 | Single government warning text | HIGH | LOW -- add lookup table |
 | A6 | Web app expected | VERY HIGH | NONE |
@@ -201,6 +196,6 @@ We assumed our validator can hard-code this text as the expected value.
 | A9 | Next.js is acceptable | HIGH | LOW -- spec says "any language" |
 | A10 | 85% fuzzy match threshold | MEDIUM | LOW -- tunable parameter |
 | A11 | 5 seconds = full round trip | HIGH | LOW -- optimize upload |
-| A12 | Sharp runs on Railway | HIGH | LOW -- fall back to Jimp |
+| A12 | Sharp runs on Azure Docker | HIGH | LOW -- fall back to Jimp |
 
 The assumptions with the lowest confidence and highest impact (A1, A2, A3) are all validated in the first half of the build sequence. This is intentional -- we resolve uncertainty before committing to the rest of the implementation.

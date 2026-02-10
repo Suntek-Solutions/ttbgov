@@ -6,20 +6,17 @@ Test labels for validating the OCR extraction and verification pipeline. Organiz
 
 ## Sources
 
-### `real/` -- TTB Public COLA Registry
+### `generated/` -- AI-Generated Controlled Test Cases (5 images)
 
-Real approved labels downloaded from TTB's free public database:
-https://www.ttbonline.gov/colasonline/publicSearchColasBasic.do
+Labels created with AI image generation tools (as the spec encourages). Each label is designed to trigger a specific pass or fail condition so we can demonstrate every verification feature. **These are the primary test labels.**
 
-No login required. These test against genuine label layouts, fonts, and formatting.
+### `real/` -- TTB Public COLA Registry (planned -- empty)
 
-### `generated/` -- AI-Generated Controlled Test Cases
+Placeholder for real approved labels from TTB's free public database (https://www.ttbonline.gov/colasonline/publicSearchColasBasic.do). No login required. Reference application data for 3 approved COLA entries is documented below. Actual label images to be downloaded from the registry's "Printable Version" links in a future iteration.
 
-Labels created with AI image generation tools (as the spec encourages). Each label is designed to trigger a specific pass or fail condition so we can demonstrate every verification feature.
+### `degraded/` -- Imperfect Image Stress Tests (planned -- empty)
 
-### `degraded/` -- Imperfect Image Stress Tests
-
-Real or generated labels with simulated poor conditions (angle, blur, low contrast). These stress-test the image preprocessing pipeline and document the OCR accuracy boundary.
+Placeholder for labels with simulated poor conditions (angle, blur, low contrast) to stress-test the image preprocessing pipeline. To be created in a future iteration.
 
 ---
 
@@ -83,9 +80,11 @@ Sourced from TTB Public COLA Registry on 2026-02-09. Use these as form input whe
 | `generated/brand-case-mismatch.png` | "OLD TOM" on label, "Old Tom" in form | Brand PASS with fuzzy match (100% after normalization) |
 | `generated/missing-warning.png` | No government warning on label | Warning field FAIL (missing) |
 
-### Degraded Images
+### Degraded Images (planned)
 
-| Image | Condition | Purpose |
+These would be created by taking a generated label and degrading it:
+
+| Image (planned) | Condition | Purpose |
 |---|---|---|
 | `degraded/angled-shot.jpg` | Label at ~30 degree angle | Test preprocessing deskew/perspective handling |
 | `degraded/low-contrast.jpg` | Washed out / overexposed | Test contrast enhancement |
@@ -95,6 +94,6 @@ Sourced from TTB Public COLA Registry on 2026-02-09. Use these as form input whe
 
 ## Notes
 
-- Real label IMAGES will be downloaded from the COLA registry "Printable Version" links or sourced from product photos during implementation step 9.
-- AI-generated labels will be created using image generation tools to match the sample label format from the spec (distilled spirits with brand, ABV, class/type, net contents, and government warning).
-- The COLA registry provides application data (what the agent enters in the form). The label images (what the agent uploads) come from the actual labels.
+- The 5 generated labels in `generated/` are the primary test set and cover all verification features.
+- The COLA registry reference data below provides real application field values for future testing with real label images.
+- The `real/` and `degraded/` folders are placeholders for future iterations.

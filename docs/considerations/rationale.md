@@ -120,10 +120,10 @@ This was the highest-impact architectural decision. Here is how I evaluated the 
 
 ### Decision 4: Deployment Platform
 
-**Railway over Vercel.** This was driven entirely by the 5-second performance requirement.
+**Azure Container Apps over Vercel.** Driven by the 5-second performance requirement and alignment with TTB's infrastructure.
 
 - **Vercel** uses serverless functions. Each API call spins up a new function instance. Tesseract.js needs to load its WASM engine and language data on each cold start -- this alone can take 3-5 seconds before OCR even begins. Combined with OCR processing time, it would blow past the 5-second budget.
-- **Railway** runs a persistent Node.js server. The Tesseract.js worker pool initializes once on startup and stays warm. Subsequent OCR requests hit a warm worker and complete in ~1-3 seconds. This meets the 5-second SLA with room to spare.
+- **Azure Container Apps** runs a persistent container. The Tesseract.js worker pool initializes once on startup and stays warm. Subsequent OCR requests hit a warm worker and complete in ~1-3 seconds. This meets the 5-second SLA with room to spare. Additionally, TTB is already on Azure (Marcus's interview), so deploying there aligns with their existing infrastructure and demonstrates production awareness.
 
 ### Decision 5: Fuzzy Matching Strategy
 
