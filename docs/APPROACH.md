@@ -113,13 +113,14 @@ All test labels are in `public/test-labels/` organized by source (`real/`, `gene
 
 | Tool | Version | Purpose |
 |---|---|---|
-| Next.js | _filled during build_ | Full-stack framework (React UI + API routes) |
-| TypeScript | _filled during build_ | Type safety across the entire codebase |
-| Tesseract.js | _filled during build_ | Local OCR engine (LSTM neural network) |
-| sharp | _filled during build_ | Image preprocessing (native Node.js) |
-| string-similarity | _filled during build_ | Fuzzy string comparison |
-| Tailwind CSS | _filled during build_ | Utility-first styling |
-| shadcn/ui | _filled during build_ | Accessible UI components |
+| Next.js | 16.1.6 | Full-stack framework (React UI + API routes) |
+| React | 19.2.3 | UI rendering |
+| TypeScript | 5.x | Type safety across the entire codebase |
+| Tesseract.js | 7.0.0 | Local OCR engine (LSTM neural network) |
+| sharp | 0.34.5 | Image preprocessing (native Node.js) |
+| string-similarity-js | 2.1.4 | Fuzzy string comparison |
+| Tailwind CSS | 4.x | Utility-first styling |
+| shadcn/ui | 3.8.4 | Accessible UI components |
 
 ---
 

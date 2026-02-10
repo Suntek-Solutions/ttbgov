@@ -22,7 +22,7 @@ Built as a standalone prototype for the Alcohol and Tobacco Tax and Trade Bureau
 ### Local Setup
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ttbgov.git
+git clone https://github.com/Suntek-Enterprises/ttbgov.git
 cd ttbgov
 npm install
 npm run dev

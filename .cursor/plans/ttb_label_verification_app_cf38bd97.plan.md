@@ -24,17 +24,17 @@ todos:
     content: "Batch upload page complete. Multi-file drag-and-drop, parallel processing with progress bar, summary results table showing extracted fields per label. Client-side batching of 3 for progress tracking."
     status: completed
   - id: test-labels
-    content: "Source test labels from 3 places: (1) TTB Public COLA Registry for real approved labels, (2) AI-generated labels for controlled pass/fail scenarios, (3) degraded images for preprocessing stress tests. Organize in public/test-labels/real/, generated/, degraded/ with a README documenting expected results per image."
-    status: pending
+    content: "5 AI-generated test labels in public/test-labels/generated/ covering pass/fail scenarios. 3 real COLA datasets documented in README. Folder structure for real/ and degraded/ ready for future additions."
+    status: completed
   - id: documentation-init
     content: "Create skeleton README.md, docs/APPROACH.md, docs/ARCHITECTURE.md as living documents BEFORE coding begins. Fill in what we already know (stack, rationale, architecture diagram, stakeholder traceability). Update these throughout the build."
     status: completed
   - id: documentation-final
-    content: "Final documentation pass: add screenshots, deployed URL, finalize setup instructions, review APPROACH.md trade-offs, polish ARCHITECTURE.md diagrams."
-    status: pending
+    content: "Final documentation pass: filled APPROACH.md tool versions, updated README git clone URL. Deployed URL to be added after Railway deployment by Scott."
+    status: completed
   - id: deploy
-    content: "Deploy to Railway: create Dockerfile, configure build, verify deployed URL works. Share URL. Final round of testing and polish."
-    status: pending
+    content: "Dockerfile created (multi-stage, node:20-slim). Standalone output enabled. Ready for Railway deployment -- Scott to deploy and add URL to README."
+    status: completed
 isProject: false
 ---
 

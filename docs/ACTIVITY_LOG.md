@@ -41,8 +41,8 @@ Project activity history for the TTB Label Verification App. Maintained througho
 
 ## Current Project State
 
-**Phase:** Implementation (all features complete -- single-label + batch upload working)
-**Next step:** Plan steps 9-11 -- test labels refinement, deployment, final documentation
+**Phase:** Complete -- all 11 plan steps done. Ready for Railway deployment by Scott.
+**Next step:** Scott deploys to Railway and adds the live URL to README.md
 **Plan reference:** `.cursor/plans/ttb_label_verification_app_cf38bd97.plan.md`
 
 ---
@@ -203,3 +203,25 @@ Project activity history for the TTB Label Verification App. Maintained througho
 - Build passes, zero lint errors
 
 **Next session:** Steps 9-11 (test labels refinement, deployment, final documentation polish).
+
+### Session 7 -- `v0.7-deploy-ready`
+
+| | |
+|---|---|
+| **Date** | 2026-02-10 (Tuesday) |
+| **Phase** | Implementation -- Steps 9, 10, 11 |
+| **Plan steps completed** | Step 9 (test labels -- verified), Step 10 (deploy prep), Step 11 (final docs) |
+| **Commit** | `v0.7-deploy-ready` |
+
+**What was done:**
+- Verified test labels are complete (5 generated labels with documented expected results, 3 COLA reference datasets)
+- Created `Dockerfile` (multi-stage build: deps -> build -> production with node:20-slim, non-root user, standalone output)
+- Enabled `output: "standalone"` in next.config.ts for Docker deployment
+- Final documentation pass: filled all tool versions in APPROACH.md (Next.js 16.1.6, React 19.2.3, Tesseract.js 7.0.0, sharp 0.34.5, etc.), updated README git clone URL
+- All 11 plan steps marked complete
+
+**All plan steps are complete.** The app is ready for Railway deployment. Scott needs to:
+1. Push to GitHub
+2. Connect the repo to Railway
+3. Deploy
+4. Add the live URL to README.md

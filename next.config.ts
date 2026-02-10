@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   // Turbopack is the default bundler in Next.js 16+
   turbopack: {},
 
+  // Standalone output for Docker deployment (copies minimal files)
+  output: "standalone",
+
   // Tesseract.js + sharp must be resolved from node_modules at runtime,
   // not bundled by Turbopack (worker threads break otherwise)
   serverExternalPackages: ["tesseract.js", "sharp"],
