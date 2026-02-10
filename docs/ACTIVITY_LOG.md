@@ -41,8 +41,8 @@ Project activity history for the TTB Label Verification App. Maintained througho
 
 ## Current Project State
 
-**Phase:** Implementation (MVP complete -- single-label verification working end-to-end)
-**Next step:** Plan step 8 -- batch upload UI, then steps 9-11 (test labels, deploy, final docs)
+**Phase:** Implementation (all features complete -- single-label + batch upload working)
+**Next step:** Plan steps 9-11 -- test labels refinement, deployment, final documentation
 **Plan reference:** `.cursor/plans/ttb_label_verification_app_cf38bd97.plan.md`
 
 ---
@@ -184,3 +184,22 @@ Project activity history for the TTB Label Verification App. Maintained througho
 **This is the shippable MVP.** Per the spec: "A working core application with clean code is preferred over ambitious but incomplete features."
 
 **Next session:** Step 8 (batch upload UI), then steps 9-11 (test labels refinement, deployment, final documentation).
+
+### Session 6 -- `v0.6-batch-ui`
+
+| | |
+|---|---|
+| **Date** | 2026-02-10 (Tuesday) |
+| **Phase** | Implementation -- Step 8 |
+| **Plan steps completed** | Step 8 (batch upload UI) |
+| **Commit** | `v0.6-batch-ui` |
+
+**What was done:**
+- Built full batch upload page at `/batch`: multi-file drag-and-drop + file picker, parallel processing with progress bar, summary results table
+- Client-side batching: processes 3 images concurrently via individual `/api/extract` calls for real-time progress tracking
+- Results table shows: filename, extracted brand/type/ABV/volume, warning presence (green/red), success/fail icons
+- Error handling: per-file errors shown inline, overall error banner for network issues
+- Clear/reset functionality
+- Build passes, zero lint errors
+
+**Next session:** Steps 9-11 (test labels refinement, deployment, final documentation polish).

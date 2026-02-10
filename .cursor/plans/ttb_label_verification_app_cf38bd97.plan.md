@@ -21,8 +21,8 @@ todos:
     content: "Single-label verification UI complete. Drag-and-drop upload, application data form with 'Fill standard warning' helper, extracted fields display with confidence scores, color-coded pass/fail results. Header with nav, About page, Batch placeholder. Tested end-to-end in browser."
     status: completed
   - id: ui-batch
-    content: "Build batch upload page: multi-file upload, progress indicators, summary results table with per-label pass/fail. Accessible from main navigation."
-    status: pending
+    content: "Batch upload page complete. Multi-file drag-and-drop, parallel processing with progress bar, summary results table showing extracted fields per label. Client-side batching of 3 for progress tracking."
+    status: completed
   - id: test-labels
     content: "Source test labels from 3 places: (1) TTB Public COLA Registry for real approved labels, (2) AI-generated labels for controlled pass/fail scenarios, (3) degraded images for preprocessing stress tests. Organize in public/test-labels/real/, generated/, degraded/ with a README documenting expected results per image."
     status: pending
