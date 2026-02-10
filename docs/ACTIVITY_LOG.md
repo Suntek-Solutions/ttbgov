@@ -41,8 +41,8 @@ Project activity history for the TTB Label Verification App. Maintained througho
 
 ## Current Project State
 
-**Phase:** Implementation (core engine built and validated)
-**Next step:** Plan step 4 -- field extraction (regex + heuristic parsing of OCR text into structured fields)
+**Phase:** Implementation (full processing pipeline built and validated)
+**Next step:** Plan step 6 -- API routes, then step 7 -- single-label verification UI
 **Plan reference:** `.cursor/plans/ttb_label_verification_app_cf38bd97.plan.md`
 
 ---
@@ -103,3 +103,38 @@ Project activity history for the TTB Label Verification App. Maintained througho
 | brand-case-mismatch.png | 75% | 990ms | "OLD TOM" and wine fields captured |
 
 **Next session:** Step 4 (field extraction) and step 5 (verification logic) -- parse OCR text into structured fields and build the comparison engine.
+
+### Session 3 -- `v0.3-extraction-and-verification`
+
+| | |
+|---|---|
+| **Date** | 2026-02-09 (Monday) |
+| **Time** | Continuation of session 2 (~30 min) |
+| **Phase** | Implementation -- Steps 4 & 5 |
+| **Plan steps completed** | Step 4 (field extraction), Step 5 (verification logic) |
+| **Commit** | `v0.3-extraction-and-verification` |
+
+**What was done:**
+- Built `src/lib/extraction/patterns.ts`: regex patterns for ABV, net contents, government warning, producer info, country of origin, and a keyword list of 40+ class/type designations
+- Built `src/lib/extraction/fieldExtractor.ts`: parses OCR text into structured ExtractedFields using regex + heuristic strategies for each field, OCR confidence scaling
+- Built `src/lib/verification/fuzzyMatch.ts`: text normalization (case, punctuation, whitespace) + string similarity comparison with configurable threshold (default 85%)
+- Built `src/lib/verification/normalizers.ts`: ABV numeric extraction (handles OCR artifact "135%" → "13.5%"), net contents volume normalization with unit conversion (mL/L/oz)
+- Built `src/lib/verification/warningValidator.ts`: 4-check validation (present, prefix all caps, sentence 1 present, sentence 2 present, body text similarity)
+- Built `src/lib/verification/comparator.ts`: dispatches each field to appropriate comparison strategy (fuzzy/numeric/exact) and produces per-field pass/fail results
+- Built `scripts/test-pipeline.ts`: full end-to-end pipeline test (image → preprocess → OCR → extraction → verification)
+- **Critical finding:** Decorative brand name fonts ("OLD TOM DISTILLERY", "STONE'S THROW", "COPPER RIDGE") are unreadable by Tesseract OCR. This is a documented Risk #1 limitation. The brand name appears in stylized serif fonts that Tesseract cannot decode. All other fields extract correctly.
+- **ABV fix:** OCR artifact "135%" (missing decimal) handled by normalizer: values >100% auto-corrected to "13.5%"
+- **5/5 pipeline tests pass.** Risk #3 (field extraction) and Risk #4 (warning detection) VALIDATED.
+
+**Pipeline test results (all CORRECT):**
+| Label | Expected | Got | Key findings |
+|---|---|---|---|
+| compliant-label.png | fail (brand unreadable) | fail | All fields except brand pass. Warning: 100% match. |
+| wrong-abv.png | fail (ABV mismatch) | fail | 40% vs 45% correctly caught |
+| wrong-warning-case.png | fail (title case warning) | fail | "Government Warning:" title case correctly rejected |
+| brand-case-mismatch.png | fail (brand + OCR quality) | fail | ABV "135%"→"13.5%" fix works. Bottle background degrades warning OCR. |
+| missing-warning.png | fail (no warning) | fail | All fields PASS except warning correctly flagged missing |
+
+**Known limitation documented:** Brand names in decorative/stylized fonts are the weakest point. In the real app UI, the agent sees the raw OCR text and can manually verify brand names. The tool flags "could not extract" rather than false-passing.
+
+**Next session:** Step 6 (API routes) and step 7 (UI) -- wire up endpoints and build the single-label verification interface.

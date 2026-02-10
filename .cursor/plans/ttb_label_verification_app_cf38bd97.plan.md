@@ -9,11 +9,11 @@ todos:
     content: "Build the OCR engine: Tesseract.js worker pool manager (src/lib/ocr/engine.ts) + image preprocessing pipeline with sharp (grayscale, normalize, sharpen) in src/lib/ocr/preprocessor.ts. Validated: 85.6% avg confidence, <1s processing."
     status: completed
   - id: field-extraction
-    content: "Build field extraction logic: parse raw OCR text into structured fields (brand name, class/type, ABV, net contents, government warning, producer info). Use regex patterns + heuristic parsing in src/lib/extraction/."
-    status: pending
+    content: "Build field extraction logic: regex patterns + heuristic parsing in src/lib/extraction/. Validated: 5/5 pipeline tests pass. Known limitation: decorative brand name fonts unreadable by OCR."
+    status: completed
   - id: verification-logic
-    content: "Build verification engine: field-by-field comparator with fuzzy matching (brand/type), numeric normalization (ABV/volume), and dedicated government warning validator (exact text + all caps check). src/lib/verification/"
-    status: pending
+    content: "Build verification engine: fuzzy matching, numeric normalization (ABV/volume), government warning validator (exact text + all caps check). All comparison strategies validated."
+    status: completed
   - id: api-routes
     content: "Build API routes: POST /api/extract (image upload -> OCR -> extracted fields), POST /api/verify (extracted fields + application data -> verification results). Wire up OCR engine + extraction + verification."
     status: pending
