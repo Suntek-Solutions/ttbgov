@@ -8,7 +8,7 @@ Built as a standalone prototype for the Alcohol and Tobacco Tax and Trade Bureau
 
 ## Live Demo
 
-> **Deployed URL:** _Pending Azure deployment -- run `./scripts/deploy-azure.sh` to deploy_
+> **Deployed URL:** https://ttb-label-verification.delightfulbeach-49152395.eastus.azurecontainerapps.io
 
 ---
 

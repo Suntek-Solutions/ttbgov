@@ -37,8 +37,10 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Tesseract.js needs node_modules at runtime for worker scripts
-COPY --from=builder /app/node_modules/tesseract.js ./node_modules/tesseract.js
+# Tesseract.js worker threads require the full dependency tree at runtime.
+# The standalone output only includes what Next.js bundles, but Tesseract's
+# worker scripts load modules via require() at runtime outside the bundle.
+COPY --from=builder /app/node_modules ./node_modules
 
 USER nextjs
 

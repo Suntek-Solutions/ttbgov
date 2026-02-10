@@ -1,0 +1,35 @@
+# Build artifacts
+.next
+out
+build
+dist
+
+# Dependencies (rebuilt in Docker)
+node_modules
+
+# Git
+.git
+.gitignore
+
+# IDE/Editor
+.vscode
+.idea
+.cursor
+
+# Playwright
+.playwright-mcp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docs (not needed in container)
+docs
+
+# Tesseract language data (downloaded at runtime)
+*.traineddata
+
+# Environment files
+.env
+.env.local
+.env.*.local

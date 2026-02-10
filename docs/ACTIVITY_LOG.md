@@ -41,8 +41,8 @@ Project activity history for the TTB Label Verification App. Maintained througho
 
 ## Current Project State
 
-**Phase:** Complete -- all 11 plan steps done. Ready for Azure deployment by Scott.
-**Next step:** Scott runs `./scripts/deploy-azure.sh` and adds the live URL to README.md
+**Phase:** DEPLOYED AND VERIFIED. Ready for submission.
+**Live URL:** https://ttb-label-verification.delightfulbeach-49152395.eastus.azurecontainerapps.io
 **Plan reference:** `.cursor/plans/ttb_label_verification_app_cf38bd97.plan.md`
 
 ---
@@ -241,3 +241,28 @@ Project activity history for the TTB Label Verification App. Maintained througho
 - Updated Dockerfile comment to be platform-agnostic (works on Azure, Railway, Render, or any Docker host)
 - Updated README: deployment section with Azure primary + Docker fallback instructions, tech stack table updated
 - Updated APPROACH.md: deployment references updated to Azure Container Apps
+
+### Session 9 -- `v0.9-deployed`
+
+| | |
+|---|---|
+| **Date** | 2026-02-10 (Tuesday) |
+| **Time** | Continuation session |
+| **Phase** | Final review, deployment, and verification |
+| **Commit** | `v0.9-deployed` |
+
+**What was done:**
+- Ran 5/5 pipeline tests (all pass)
+- Exhaustive final review of all docs -- found and fixed 10 issues (README placeholders, ARCHITECTURE.md stale types/batch spec, package.json name, test-labels docs, activity log timestamps, string-similarity naming)
+- Deployed to Azure Container Apps:
+  - Created resource group `ttb-label-verification-rg` in eastus
+  - Created Azure Container Registry `ttblabelacr`
+  - Built and pushed Docker image via `az acr build --no-logs` (workaround: Azure CLI Unicode crash on Windows with Next.js output)
+  - Created Container Apps environment `ttb-label-env`
+  - Deployed container with 1 vCPU / 2GB RAM, min 1 replica (always-on)
+  - Fixed missing Tesseract.js runtime dependencies in Dockerfile (bmp-js, wasm-feature-detect) by copying full node_modules
+  - Added `.dockerignore` to exclude .next build cache, node_modules, .git
+- **Verified live deployment via browser**: uploaded test label, OCR extracted all fields in 3492ms (cold start), all fields correct
+- Updated README with deployed URL
+
+**Deployment URL:** https://ttb-label-verification.delightfulbeach-49152395.eastus.azurecontainerapps.io
