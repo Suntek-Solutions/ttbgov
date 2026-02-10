@@ -18,8 +18,8 @@ todos:
     content: "Build API routes: POST /api/extract, POST /api/verify, POST /api/batch. All tested and working. Fixed Tesseract.js Turbopack module resolution with explicit workerPath + serverExternalPackages."
     status: completed
   - id: ui-single-label
-    content: "Build the single-label verification UI: drag-and-drop image upload component, application data form, extracted fields display, verification results with color-coded pass/fail per field, confidence scores. Clean, accessible, large buttons."
-    status: pending
+    content: "Single-label verification UI complete. Drag-and-drop upload, application data form with 'Fill standard warning' helper, extracted fields display with confidence scores, color-coded pass/fail results. Header with nav, About page, Batch placeholder. Tested end-to-end in browser."
+    status: completed
   - id: ui-batch
     content: "Build batch upload page: multi-file upload, progress indicators, summary results table with per-label pass/fail. Accessible from main navigation."
     status: pending

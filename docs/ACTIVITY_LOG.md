@@ -41,8 +41,8 @@ Project activity history for the TTB Label Verification App. Maintained througho
 
 ## Current Project State
 
-**Phase:** Implementation (API routes complete, UI next)
-**Next step:** Plan step 7 -- single-label verification UI (shippable MVP)
+**Phase:** Implementation (MVP complete -- single-label verification working end-to-end)
+**Next step:** Plan step 8 -- batch upload UI, then steps 9-11 (test labels, deploy, final docs)
 **Plan reference:** `.cursor/plans/ttb_label_verification_app_cf38bd97.plan.md`
 
 ---
@@ -159,3 +159,28 @@ Project activity history for the TTB Label Verification App. Maintained througho
 - Production build passes with all 3 routes showing as dynamic endpoints
 
 **Next session:** Step 7 -- single-label verification UI (the shippable MVP).
+
+### Session 5 -- `v0.5-single-label-ui`
+
+| | |
+|---|---|
+| **Date** | 2026-02-10 (Tuesday) |
+| **Phase** | Implementation -- Step 7 |
+| **Plan steps completed** | Step 7 (single-label verification UI) |
+| **Commit** | `v0.5-single-label-ui` |
+
+**What was done:**
+- Built app layout with header/nav (TTB branding, 3 nav items: Verify Label, Batch Upload, How It Works)
+- Built `LabelUploader` component: drag-and-drop + file picker, image preview, file validation, disabled state during processing
+- Built `ApplicationForm` component: 6 input fields (brand, class/type, ABV, net contents, producer, origin) + government warning textarea with "Fill standard warning" helper button
+- Built `ExtractedFields` component: displays OCR results per field with confidence badges ("not found" for missing fields)
+- Built `VerificationResults` component: color-coded pass/fail per field (green checkmarks, red X), overall badge (PASS/FAIL with count), comparison method tags (fuzzy/numeric/exact), confidence percentages
+- Built main `page.tsx`: 3-step flow (upload -> extract -> verify) with state management, loading states, error handling, and reset
+- Built About page: 3-card explanation of how the tool works + technical details section
+- Built Batch placeholder page (API ready, UI to be expanded in step 8)
+- Added shadcn/ui components: input, label, textarea, alert
+- **Tested full end-to-end flow in browser**: uploaded missing-warning.png, OCR extracted all fields in 695ms, filled application data, verified -- correctly showed 4 PASS (brand, class, ABV, volume) + 1 FAIL (government warning not found). UI is clean, professional, and accessible.
+
+**This is the shippable MVP.** Per the spec: "A working core application with clean code is preferred over ambitious but incomplete features."
+
+**Next session:** Step 8 (batch upload UI), then steps 9-11 (test labels refinement, deployment, final documentation).
