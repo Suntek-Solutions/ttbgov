@@ -266,3 +266,18 @@ Project activity history for the TTB Label Verification App. Maintained througho
 - Updated README with deployed URL
 
 **Deployment URL:** https://ttb-label-verification.delightfulbeach-49152395.eastus.azurecontainerapps.io
+
+### Session 10 -- `v1.0-release`
+
+| | |
+|---|---|
+| **Date** | 2026-02-10 (Tuesday) |
+| **Time** | Continuation session |
+| **Phase** | Final polish for delivery |
+| **Commit** | `v1.0-release` |
+
+**What was done:**
+- Took 3 screenshots of the live deployed app (home, extraction results with OCR fields, verification results with pass/fail)
+- Rewrote README for professional delivery: added screenshots, Documentation Guide table (maps evaluator questions to docs), version numbers in tech stack, expanded project structure with inline descriptions, trade-offs as a table, cleaner closing
+- Added links to ACTIVITY_LOG.md and all consideration docs from README so evaluators can navigate the full documentation
+- Moved screenshots to `docs/screenshots/` for clean organization

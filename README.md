@@ -4,11 +4,20 @@ An AI-powered tool that helps TTB compliance agents verify alcohol beverage labe
 
 Built as a standalone prototype for the Alcohol and Tobacco Tax and Trade Bureau (TTB).
 
+> **Live Demo:** https://ttb-label-verification.delightfulbeach-49152395.eastus.azurecontainerapps.io
+
 ---
 
-## Live Demo
+## Screenshots
 
-> **Deployed URL:** https://ttb-label-verification.delightfulbeach-49152395.eastus.azurecontainerapps.io
+### Upload a label image
+![Home - Upload](docs/screenshots/01-home.png)
+
+### AI extracts fields from the label and shows them alongside the application form
+![Extraction Results](docs/screenshots/02-extracted.png)
+
+### Color-coded verification results with per-field pass/fail and confidence scores
+![Verification Results](docs/screenshots/03-results.png)
 
 ---
 
@@ -32,8 +41,6 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### Environment Variables
 
-Copy the example env file:
-
 ```bash
 cp .env.example .env.local
 ```
@@ -47,18 +54,18 @@ cp .env.example .env.local
 A compliance agent reviews ~150,000 label applications per year. Each review involves comparing what's printed on a physical label against what's declared in the application. This tool automates that comparison:
 
 1. **Upload** a label image (drag-and-drop or file picker)
-2. **OCR extracts** all text from the label using Tesseract.js (runs locally, no cloud APIs)
+2. **AI extracts** all text from the label using Tesseract.js (runs locally, no cloud APIs)
 3. **Enter application data** in a simple form (brand name, ABV, class/type, etc.)
 4. **Get instant results** -- field-by-field pass/fail with confidence scores
 
 ### Key Features
 
-- **Single label verification** -- the core 80% use case
+- **Single label verification** -- the core workflow: upload, extract, compare, verify
 - **Batch upload** -- process multiple labels at once for high-volume importers
-- **Fuzzy matching** -- handles case/punctuation differences ("STONE'S THROW" vs "Stone's Throw")
-- **Government warning validation** -- exact text match with all-caps prefix check
+- **Fuzzy matching** -- handles case and punctuation differences ("STONE'S THROW" vs "Stone's Throw")
+- **Government warning validation** -- exact text match with all-caps prefix check per TTB requirements
 - **Image preprocessing** -- grayscale, contrast enhancement, sharpening for imperfect photos
-- **Sub-5-second response** -- warm OCR worker pool keeps processing fast
+- **Sub-5-second response** -- warm OCR worker pool keeps processing fast after initial load
 
 ---
 
@@ -66,9 +73,9 @@ A compliance agent reviews ~150,000 label applications per year. Each review inv
 
 | Layer | Technology | Why |
 |---|---|---|
-| Framework | Next.js (TypeScript) | Single codebase, single deployment, type-safe |
-| UI | React + Tailwind CSS + shadcn/ui | Accessible, clean, responsive -- usable by non-technical staff |
-| OCR | Tesseract.js | Local OCR engine, no cloud API calls, works behind firewalls |
+| Framework | Next.js 16 (TypeScript) | Single codebase, single deployment, type-safe |
+| UI | React 19 + Tailwind CSS 4 + shadcn/ui | Accessible, clean, responsive -- usable by non-technical staff |
+| OCR | Tesseract.js 7 | Local OCR engine (LSTM neural network), no cloud API calls, works behind firewalls |
 | Image Processing | sharp | Fast native Node.js image manipulation for preprocessing |
 | Fuzzy Matching | string-similarity-js | Case/punctuation-normalized comparison with confidence scores |
 | Deployment | Azure Container Apps | Persistent container, always-on, aligns with TTB's Azure infrastructure |
@@ -79,46 +86,60 @@ The TTB network blocks outbound traffic to many domains. A previous vendor's clo
 
 ---
 
+## Documentation Guide
+
+| Question | Document |
+|---|---|
+| How do I set up and run this? | You're here -- see [Quick Start](#quick-start) above |
+| Why were these technologies chosen? | [docs/APPROACH.md](docs/APPROACH.md) -- maps every stakeholder interview to a design decision |
+| How does the system work technically? | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) -- system diagrams, data flow, API specs, TypeScript interfaces |
+| What could go wrong and how would you handle it? | [docs/considerations/risks.md](docs/considerations/risks.md) -- 10 risks ranked by severity with pivot strategies |
+| What assumptions were made? | [docs/considerations/assumptions.md](docs/considerations/assumptions.md) -- 12 assumptions with confidence ratings |
+| Why this specific plan? | [docs/considerations/rationale.md](docs/considerations/rationale.md) -- full decision tree for every architectural choice |
+| What was the development process? | [docs/ACTIVITY_LOG.md](docs/ACTIVITY_LOG.md) -- timestamped session log of every step taken |
+| How were test labels sourced? | [public/test-labels/README.md](public/test-labels/README.md) -- 5 AI-generated labels with expected results + 3 COLA registry datasets |
+
+---
+
 ## Project Structure
 
 ```
 ttbgov/
 ├── docs/
-│   ├── spec/                    # Original project spec and breakdowns
-│   ├── considerations/          # Internal planning (rationale, risks, assumptions)
 │   ├── APPROACH.md              # Approach, decisions, trade-offs
-│   └── ARCHITECTURE.md          # System architecture and data flow
+│   ├── ARCHITECTURE.md          # System architecture and data flow
+│   ├── ACTIVITY_LOG.md          # Development session history
+│   ├── spec/                    # Original project spec and breakdowns
+│   └── considerations/          # Planning: rationale, risks, assumptions
 ├── src/
 │   ├── app/                     # Next.js App Router (pages + API routes)
-│   ├── components/              # React components
-│   └── lib/                     # Core logic (OCR, extraction, verification)
-├── public/test-labels/          # Test labels: real (COLA registry), generated (AI), degraded (stress tests)
-├── Dockerfile                   # Production container
-└── README.md                    # You are here
+│   │   ├── page.tsx             # Single-label verification (main flow)
+│   │   ├── batch/page.tsx       # Batch upload page
+│   │   ├── about/page.tsx       # How It Works page
+│   │   └── api/                 # REST endpoints (extract, verify, batch)
+│   ├── components/              # React UI components
+│   └── lib/                     # Core processing logic
+│       ├── ocr/                 # Tesseract.js engine + sharp preprocessing
+│       ├── extraction/          # OCR text → structured fields (regex + heuristics)
+│       └── verification/        # Field comparison (fuzzy, numeric, exact)
+├── public/test-labels/          # Test labels (generated + COLA reference data)
+├── scripts/                     # Deployment + test scripts
+├── Dockerfile                   # Production container (platform-agnostic)
+└── README.md
 ```
-
----
-
-## Screenshots
-
-> Screenshots will be added after deployment. To preview locally, run `npm run dev` and open http://localhost:3000.
-
----
-
-## Approach & Documentation
-
-- **[docs/APPROACH.md](docs/APPROACH.md)** -- How stakeholder interviews informed every design decision, trade-offs acknowledged, what would change for production
-- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** -- System architecture diagram, data flow, module responsibilities
 
 ---
 
 ## Trade-offs & Limitations
 
-- **OCR accuracy** -- Tesseract.js is less accurate than cloud vision APIs (GPT-4o, Google Vision) on complex label layouts. Image preprocessing mitigates this but does not eliminate it. Best results come from flat, well-lit label scans rather than angled bottle photos.
-- **No COLA integration** -- This is a standalone prototype per the spec. Production integration with COLA would require separate authorization and scoping.
-- **No persistent storage** -- Labels and results are processed in-memory. Nothing is stored between sessions.
-- **English labels only** -- TTB labels are English. Multi-language OCR is not included to keep the deployment lightweight.
-- **Government warning validation** -- Uses a high-threshold fuzzy match on the body text to account for minor OCR artifacts while keeping the "GOVERNMENT WARNING:" prefix check strict.
+| Decision | Trade-off | Why we accepted it |
+|---|---|---|
+| Tesseract.js over cloud AI | Lower accuracy on decorative fonts | No cloud dependency, works behind firewalls, meets the constraint Marcus described |
+| Fuzzy matching for text fields | Could allow false positives on genuinely different names | Dave's example showed exact matching produces false negatives that are worse for workflow |
+| No persistent storage | Results not saved between sessions | Marcus said "don't do anything crazy" -- prototype scope, no data retention needed |
+| No COLA integration | Agent enters data manually | Standalone prototype per spec -- COLA integration is a production concern |
+
+See [docs/APPROACH.md](docs/APPROACH.md) for the complete trade-off analysis.
 
 ---
 
@@ -126,25 +147,18 @@ ttbgov/
 
 ### Azure Container Apps (primary)
 
-Deployed to Azure Container Apps, consistent with TTB's existing Azure infrastructure. The deployment is fully config-driven via `scripts/deploy-azure.sh`:
+Deployed to Azure Container Apps, consistent with TTB's existing Azure infrastructure:
 
 ```bash
-# Login to Azure (if not already)
 az login
-
-# Deploy (all config via environment variables with sensible defaults)
 ./scripts/deploy-azure.sh
 ```
 
-Override any default with environment variables:
-
-```bash
-AZURE_RESOURCE_GROUP=my-group AZURE_LOCATION=westus ./scripts/deploy-azure.sh
-```
+All configuration is driven by environment variables with sensible defaults. See the script for details.
 
 ### Docker (run anywhere)
 
-The app ships as a standard Docker container. Deploy to any platform that runs Docker:
+The app ships as a standard Docker container that runs on any platform:
 
 ```bash
 docker build -t ttb-label-verification .
@@ -155,15 +169,16 @@ docker run -p 3000:3000 ttb-label-verification
 
 ## What Would Change for Production
 
-- **Azure deployment** with FedRAMP-certified infrastructure
+This is a prototype. A production deployment at TTB would require:
+
 - **COLA system integration** for automated application data import
-- **Azure AI Document Intelligence** or similar for higher-accuracy OCR (once firewall rules allow)
-- **User authentication** and role-based access
+- **Azure AI Document Intelligence** for higher-accuracy OCR (once firewall rules allow)
+- **User authentication and RBAC** for agent accounts
 - **Audit logging** and document retention per federal compliance requirements
-- **Section 508 accessibility audit**
+- **Database** for processing history, batch tracking, and reporting
+- **Section 508 accessibility compliance** audit
+- **Load testing** for 150,000 labels/year throughput across 47 concurrent agents
 
 ---
 
-## License
-
-This project was built as a take-home exercise for the TTB IT Specialist position.
+*Built by Scott Vidito as a take-home exercise for the TTB IT Specialist position.*
