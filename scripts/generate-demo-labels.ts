@@ -45,6 +45,65 @@ function titleCase(name: string): string {
     .join(" ");
 }
 
+/**
+ * Assign realistic ABV values based on beverage type and class.
+ * Some are intentionally wrong (marked with _wrong suffix in internal tracking)
+ * to create interesting test data.
+ */
+function assignAbv(
+  category: string,
+  classTypeDesc: string,
+  index: number
+): { value: string; intentionallyWrong: boolean } {
+  // Every 5th real label gets an intentionally wrong ABV
+  const makeWrong = index % 5 === 0;
+
+  let baseAbv: number;
+
+  if (category === "wine") {
+    if (classTypeDesc.includes("DESSERT") || classTypeDesc.includes("PORT") || classTypeDesc.includes("SHERRY")) {
+      baseAbv = 18;
+    } else if (classTypeDesc.includes("WHITE")) {
+      baseAbv = 12.5;
+    } else {
+      baseAbv = 13.5;
+    }
+  } else if (category === "malt_beverage") {
+    if (classTypeDesc.includes("NON ALCOHOLIC") || classTypeDesc.includes("NEAR BEER")) {
+      baseAbv = 0.5;
+    } else if (classTypeDesc.includes("STOUT")) {
+      baseAbv = 8;
+    } else if (classTypeDesc.includes("SPECIALIT")) {
+      baseAbv = 6;
+    } else {
+      baseAbv = 5.5;
+    }
+  } else {
+    // distilled_spirits
+    if (classTypeDesc.includes("TEQUILA")) {
+      baseAbv = 40;
+    } else if (classTypeDesc.includes("BOURBON") || classTypeDesc.includes("WHISKY") || classTypeDesc.includes("WHISKEY")) {
+      baseAbv = 45;
+    } else if (classTypeDesc.includes("GIN")) {
+      baseAbv = 47;
+    } else if (classTypeDesc.includes("BRANDY")) {
+      baseAbv = 40;
+    } else if (classTypeDesc.includes("LIQUEUR") || classTypeDesc.includes("CORDIAL")) {
+      baseAbv = 35;
+    } else {
+      baseAbv = 40;
+    }
+  }
+
+  if (makeWrong) {
+    // Shift by 2-5% to make it clearly wrong but not absurd
+    const shift = (index % 3 === 0) ? 3 : (index % 3 === 1) ? -2 : 5;
+    return { value: (baseAbv + shift) + "%", intentionallyWrong: true };
+  }
+
+  return { value: baseAbv + "%", intentionallyWrong: false };
+}
+
 function slugify(name: string): string {
   return name
     .toLowerCase()
@@ -149,6 +208,7 @@ const generated = [
 
 // Generate real label entries from COLA metadata
 const seen = new Set<string>();
+let realIndex = 0;
 const real = (metadata as Array<Record<string, string>>)
   .map((m) => {
     const slug = slugify(m.brand_name) + "-" + m.ttbid.slice(-4);
@@ -168,11 +228,20 @@ const real = (metadata as Array<Record<string, string>>)
       titleCase(m.brand_name) +
       (m.fanciful_name ? " - " + titleCase(m.fanciful_name) : "");
 
+    // Assign ABV -- some correct, some intentionally wrong
+    const abv = assignAbv(m.category, m.class_type_desc, realIndex);
+    realIndex++;
+
+    // Adjust net contents for beer/malt (typically 12 oz, not 750 mL)
+    const netContents = m.category === "malt_beverage" ? "12 oz" : "750 mL";
+
+    const descSuffix = abv.intentionallyWrong ? " (ABV intentionally wrong)" : "";
+
     const appData: Record<string, string> = {
       brandName: m.brand_name,
       classType: classType,
-      alcoholContent: "",
-      netContents: "750 mL",
+      alcoholContent: abv.value,
+      netContents: netContents,
       governmentWarning: STANDARD_WARNING,
     };
     if (origin) appData.countryOfOrigin = origin;
@@ -180,7 +249,7 @@ const real = (metadata as Array<Record<string, string>>)
     return {
       id: "real-" + slug,
       name: displayName,
-      description: "Real COLA -- " + catLabel + " -- " + classType,
+      description: "Real COLA -- " + catLabel + " -- " + classType + descSuffix,
       category: "real",
       bevType: m.category,
       file: "/" + m.local_path.replace(/^public\//, ""),
