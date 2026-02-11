@@ -12,11 +12,21 @@ export function LabelUploader({ onImageSelected, isProcessing }: LabelUploaderPr
   const [preview, setPreview] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
 
   const handleFile = useCallback(
     (file: File) => {
+      setFileError(null);
       if (!file.type.startsWith("image/")) {
-        alert("Please upload an image file (JPEG, PNG, WebP).");
+        setFileError(
+          `"${file.name}" is not a supported image format. Please upload a JPEG, PNG, or WebP file.`
+        );
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        setFileError(
+          `"${file.name}" is ${(file.size / 1024 / 1024).toFixed(1)}MB. Maximum file size is 10MB.`
+        );
         return;
       }
       setFileName(file.name);
@@ -47,6 +57,14 @@ export function LabelUploader({ onImageSelected, isProcessing }: LabelUploaderPr
   return (
     <div className="space-y-3">
       <label className="text-sm font-medium text-gray-700">Label Image</label>
+
+      {/* Inline error message */}
+      {fileError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+          <p className="text-sm text-red-700">{fileError}</p>
+        </div>
+      )}
+
       <div
         onDrop={handleDrop}
         onDragOver={(e) => {
@@ -59,6 +77,8 @@ export function LabelUploader({ onImageSelected, isProcessing }: LabelUploaderPr
             ? "border-blue-500 bg-blue-50"
             : preview
             ? "border-green-300 bg-green-50"
+            : fileError
+            ? "border-red-300 bg-red-50/30"
             : "border-gray-300 bg-white hover:border-blue-400 hover:bg-blue-50/50"
         } ${isProcessing ? "pointer-events-none opacity-60" : ""}`}
       >

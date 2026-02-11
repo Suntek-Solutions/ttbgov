@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { Header } from "@/components/Header";
+import { DemoProvider } from "@/lib/demo-context";
+import { DebugConsole } from "@/components/DebugConsole";
 import "./globals.css";
 
 const geist = Geist({
@@ -21,8 +23,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geist.className} bg-gray-50 antialiased`}>
-        <Header />
-        <main className="mx-auto max-w-5xl px-6 py-8">{children}</main>
+        <DemoProvider>
+          <Header />
+          <main className="mx-auto max-w-5xl px-6 py-8">{children}</main>
+          <DebugConsole />
+        </DemoProvider>
       </body>
     </html>
   );

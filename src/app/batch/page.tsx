@@ -11,7 +11,16 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { useDemo } from "@/lib/demo-context";
 import type { ExtractedFields } from "@/lib/types";
+
+const EXAMPLE_BATCH_LABELS = [
+  "/test-labels/generated/compliant-label.png",
+  "/test-labels/generated/wrong-abv.png",
+  "/test-labels/generated/wrong-warning-case.png",
+  "/test-labels/generated/missing-warning.png",
+  "/test-labels/generated/brand-case-mismatch.png",
+];
 
 interface BatchResult {
   filename: string;
@@ -25,6 +34,23 @@ export default function BatchPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const { demoMode, addLog } = useDemo();
+
+  const loadExampleBatch = async () => {
+    if (demoMode) addLog("Loading all 5 example labels for batch processing...");
+    const loaded: File[] = [];
+    for (const url of EXAMPLE_BATCH_LABELS) {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const name = url.split("/").pop() ?? "label.png";
+      loaded.push(new File([blob], name, { type: "image/png" }));
+    }
+    setFiles(loaded);
+    setResults([]);
+    setProgress(0);
+    setError(null);
+    if (demoMode) addLog(`Loaded ${loaded.length} example labels`);
+  };
 
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -140,6 +166,15 @@ export default function BatchPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Demo mode: load example labels */}
+          {demoMode && files.length === 0 && (
+            <button
+              onClick={loadExampleBatch}
+              className="w-full rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-100"
+            >
+              Load All 5 Example Labels (Demo Mode)
+            </button>
+          )}
           <div
             onDrop={handleDrop}
             onDragOver={(e) => e.preventDefault()}

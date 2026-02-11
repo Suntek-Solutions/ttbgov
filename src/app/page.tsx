@@ -8,6 +8,8 @@ import { LabelUploader } from "@/components/LabelUploader";
 import { ApplicationForm } from "@/components/ApplicationForm";
 import { ExtractedFields } from "@/components/ExtractedFields";
 import { VerificationResults } from "@/components/VerificationResults";
+import { ExampleLabelPicker } from "@/components/ExampleLabelPicker";
+import { useDemo } from "@/lib/demo-context";
 import type {
   ApplicationData,
   ExtractedFields as ExtractedFieldsType,
@@ -37,6 +39,17 @@ export default function Home() {
   const [isExtracting, setIsExtracting] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { demoMode, addLog } = useDemo();
+
+  const handleImageSelected = (file: File) => {
+    setSelectedFile(file);
+    if (demoMode) addLog(`Image selected: ${file.name} (${(file.size / 1024).toFixed(0)}KB)`);
+    if (step !== "upload") {
+      setExtractedFields(null);
+      setVerifyResult(null);
+      setStep("upload");
+    }
+  };
 
   // Step 1: Extract text from uploaded label image
   const handleExtract = async () => {
@@ -44,6 +57,7 @@ export default function Home() {
 
     setIsExtracting(true);
     setError(null);
+    if (demoMode) addLog(`Starting OCR extraction for ${selectedFile.name}...`);
 
     try {
       const formData = new FormData();
@@ -58,14 +72,29 @@ export default function Home() {
 
       if (!data.success || !data.fields) {
         setError(data.error ?? "Extraction failed.");
+        if (demoMode) addLog(`ERROR: Extraction failed -- ${data.error}`);
         return;
       }
 
       setExtractedFields(data.fields);
       setExtractTime(data.processingTimeMs);
       setStep("extracted");
+
+      if (demoMode) {
+        addLog(`OCR complete in ${data.processingTimeMs}ms`);
+        const fieldCount = Object.entries(data.fields)
+          .filter(([k, v]) => k !== "rawText" && (v as { value: string | null }).value)
+          .length;
+        addLog(`Extracted ${fieldCount}/7 fields`);
+        if (data.fields.governmentWarning.value) {
+          addLog("Government warning: FOUND");
+        } else {
+          addLog("Government warning: NOT FOUND on label");
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Network error during extraction.");
+      if (demoMode) addLog(`ERROR: ${err instanceof Error ? err.message : "Network error"}`);
     } finally {
       setIsExtracting(false);
     }
@@ -77,6 +106,7 @@ export default function Home() {
 
     setIsVerifying(true);
     setError(null);
+    if (demoMode) addLog("Starting verification...");
 
     try {
       const res = await fetch("/api/verify", {
@@ -92,13 +122,22 @@ export default function Home() {
 
       if (!data.success) {
         setError(data.error ?? "Verification failed.");
+        if (demoMode) addLog(`ERROR: Verification failed -- ${data.error}`);
         return;
       }
 
       setVerifyResult(data);
       setStep("results");
+
+      if (demoMode) {
+        addLog(`Verification complete in ${data.processingTimeMs}ms -- ${data.overall?.toUpperCase()}`);
+        data.results?.forEach((r) => {
+          addLog(`  ${r.match ? "PASS" : "FAIL"} ${r.field}: ${r.details}`);
+        });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Network error during verification.");
+      if (demoMode) addLog(`ERROR: ${err instanceof Error ? err.message : "Network error"}`);
     } finally {
       setIsVerifying(false);
     }
@@ -113,10 +152,11 @@ export default function Home() {
     setApplicationData(EMPTY_APPLICATION);
     setVerifyResult(null);
     setError(null);
+    if (demoMode) addLog("Reset -- ready for new label");
   };
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${demoMode ? "pb-[180px]" : ""}`}>
       {/* Page title */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">
@@ -145,16 +185,13 @@ export default function Home() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Demo mode: example label picker */}
+          {demoMode && step === "upload" && (
+            <ExampleLabelPicker onSelect={handleImageSelected} />
+          )}
+
           <LabelUploader
-            onImageSelected={(file) => {
-              setSelectedFile(file);
-              // Reset downstream state if re-uploading
-              if (step !== "upload") {
-                setExtractedFields(null);
-                setVerifyResult(null);
-                setStep("upload");
-              }
-            }}
+            onImageSelected={handleImageSelected}
             isProcessing={isExtracting}
           />
           <Button

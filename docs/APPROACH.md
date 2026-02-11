@@ -161,3 +161,32 @@ This is a prototype. A production deployment at TTB would require:
 - **Section 508 accessibility compliance** audit
 - **Database** for processing history, batch tracking, and reporting
 - **Load testing** for 150,000 labels/year throughput across 47 concurrent agents
+
+---
+
+## Development Process & Transparency
+
+This project was built by Scott Vidito with the assistance of an AI coding agent (Cursor IDE with Claude). Full transparency on the process:
+
+**What the AI did:**
+- Analyzed the spec and extracted requirements from stakeholder interviews
+- Proposed architecture decisions (which Scott reviewed, questioned, and directed)
+- Generated code for the OCR engine, field extraction, verification logic, API routes, and UI components
+- Ran tests, diagnosed issues (e.g., CLAHE preprocessing destroying accuracy, Tesseract.js Turbopack module resolution), and iterated on fixes
+- Wrote documentation drafts that Scott reviewed and refined
+- Deployed to Azure Container Apps via CLI
+
+**What Scott did:**
+- Directed all architectural decisions (stack choice, deployment platform, OCR approach)
+- Reviewed every code change and document before committing
+- Made judgment calls on scope, trade-offs, and priorities
+- Managed the project timeline and session workflow
+- Provided domain context and quality standards
+
+**Why we're transparent about this:**
+- The spec evaluates "Creative problem-solving" and "Appropriate technical choices" -- both are human judgment calls that Scott made
+- AI-assisted development is a modern engineering practice, not a shortcut. The tool amplifies the developer; it doesn't replace the thinking.
+- The [Activity Log](ACTIVITY_LOG.md) documents every session, decision, and iteration in real time
+- Every line of code was reviewed and understood before being committed
+
+This approach reflects how Scott would work in the role: leveraging the best tools available while maintaining full ownership of decisions and quality.
