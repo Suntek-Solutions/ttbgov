@@ -39,7 +39,7 @@
     "description": "\"Government Warning:\" not all caps -- warning prefix should fail",
     "category": "generated",
     "file": "/test-labels/generated/wrong-warning-case.png",
-    "expectedResult": "Warning fails ('GOVERNMENT WARNING:' prefix not in all caps). Demonstrates Jenny's exact check.",
+    "expectedResult": "Warning fails (prefix not in all caps). Demonstrates Jenny's exact check.",
     "applicationData": {
       "brandName": "COPPER RIDGE",
       "classType": "Straight Rye Whiskey",
@@ -54,7 +54,7 @@
     "description": "\"OLD TOM\" on label vs \"Old Tom\" in form -- fuzzy match test",
     "category": "generated",
     "file": "/test-labels/generated/brand-case-mismatch.png",
-    "expectedResult": "Class/type and ABV pass. Brand OCR is unreliable on this label (bottle background).",
+    "expectedResult": "Class/type and ABV pass. Brand OCR unreliable on bottle background.",
     "applicationData": {
       "brandName": "Old Tom",
       "classType": "Cabernet Sauvignon",
@@ -69,7 +69,7 @@
     "description": "No government warning on label -- warning should fail",
     "category": "generated",
     "file": "/test-labels/generated/missing-warning.png",
-    "expectedResult": "Warning fails (not found on label). All other fields pass. Cleanest demo result.",
+    "expectedResult": "Warning fails (not found on label). All other fields pass. Cleanest demo.",
     "applicationData": {
       "brandName": "HARBOR LIGHT",
       "classType": "London Dry Gin",
@@ -81,55 +81,921 @@
     }
   },
   {
-    "id": "woodford-reserve",
-    "name": "Woodford Reserve",
-    "description": "Real COLA label -- Straight Bourbon Whisky (thumbnail from registry)",
+    "id": "real-pietro-rinaldi-0213",
+    "name": "Pietro Rinaldi - Massirano",
+    "description": "Real COLA -- Wine -- Dessert / Port / Sherry / (cooking) Wine",
     "category": "real",
-    "bevType": "distilled_spirits",
-    "file": "/test-labels/real/distilled_spirits/15061001000031_woodford-reserve_straight-bourbon-whisky.jpg",
-    "ttbId": "15061001000031",
-    "expectedResult": "Partial extraction only -- real COLA thumbnail, limited OCR accuracy.",
+    "bevType": "wine",
+    "file": "/test-labels/real/wine/18333001000213_pietro-rinaldi_dessert-port-sherry-cooking-wi.jpg",
+    "ttbId": "18333001000213",
     "applicationData": {
-      "brandName": "WOODFORD RESERVE",
-      "classType": "Straight Bourbon Whisky",
-      "alcoholContent": "45.2%",
+      "brandName": "PIETRO RINALDI",
+      "classType": "Dessert / Port / Sherry / (cooking) Wine",
+      "alcoholContent": "",
       "netContents": "750 mL",
-      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Italy"
     }
   },
   {
-    "id": "casamigos-tequila",
-    "name": "Casamigos Tequila",
-    "description": "Real COLA label -- Tequila (thumbnail from registry)",
+    "id": "real-cantine-mothia-0108",
+    "name": "Cantine Mothia - Mosaikon",
+    "description": "Real COLA -- Wine -- Table White Wine",
     "category": "real",
-    "bevType": "distilled_spirits",
-    "file": "/test-labels/real/distilled_spirits/14049001000115_casamigos_tequila-fb.jpg",
-    "ttbId": "14049001000115",
-    "expectedResult": "Partial match -- class/type, ABV, and volume detected from real thumbnail.",
+    "bevType": "wine",
+    "file": "/test-labels/real/wine/18311001000108_cantine-mothia_table-white-wine.jpg",
+    "ttbId": "18311001000108",
     "applicationData": {
-      "brandName": "CASAMIGOS",
-      "classType": "Tequila",
-      "alcoholContent": "40%",
+      "brandName": "CANTINE MOTHIA",
+      "classType": "Table White Wine",
+      "alcoholContent": "",
       "netContents": "750 mL",
-      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Italy"
     }
   },
   {
-    "id": "corte-adagio-red",
-    "name": "Corte Adagio Red Wine",
-    "description": "Real COLA label -- Italian Merlot (thumbnail from registry)",
+    "id": "real-cantine-mothia-0106",
+    "name": "Cantine Mothia - Dedicato A Francesco",
+    "description": "Real COLA -- Wine -- Dessert / Port / Sherry / (cooking) Wine",
+    "category": "real",
+    "bevType": "wine",
+    "file": "/test-labels/real/wine/18311001000106_cantine-mothia_dessert-port-sherry-cooking-wi.jpg",
+    "ttbId": "18311001000106",
+    "applicationData": {
+      "brandName": "CANTINE MOTHIA",
+      "classType": "Dessert / Port / Sherry / (cooking) Wine",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Italy"
+    }
+  },
+  {
+    "id": "real-cantine-mothia-0370",
+    "name": "Cantine Mothia - Mosaikon",
+    "description": "Real COLA -- Wine -- Table Red Wine",
+    "category": "real",
+    "bevType": "wine",
+    "file": "/test-labels/real/wine/18309001000370_cantine-mothia_table-red-wine.jpg",
+    "ttbId": "18309001000370",
+    "applicationData": {
+      "brandName": "CANTINE MOTHIA",
+      "classType": "Table Red Wine",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Italy"
+    }
+  },
+  {
+    "id": "real-azienda-agricola-cipriana-0239",
+    "name": "Azienda Agricola Cipriana - San Martino",
+    "description": "Real COLA -- Wine -- Dessert / Port / Sherry / (cooking) Wine",
+    "category": "real",
+    "bevType": "wine",
+    "file": "/test-labels/real/wine/18309001000239_azienda-agricola-cipriana_dessert-port-sherry-cooking-wi.jpg",
+    "ttbId": "18309001000239",
+    "applicationData": {
+      "brandName": "AZIENDA AGRICOLA CIPRIANA",
+      "classType": "Dessert / Port / Sherry / (cooking) Wine",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Italy"
+    }
+  },
+  {
+    "id": "real-azienda-agricola-cipriana-0232",
+    "name": "Azienda Agricola Cipriana - Vigna Scopaio",
+    "description": "Real COLA -- Wine -- Table Red Wine",
+    "category": "real",
+    "bevType": "wine",
+    "file": "/test-labels/real/wine/18309001000232_azienda-agricola-cipriana_table-red-wine.jpg",
+    "ttbId": "18309001000232",
+    "applicationData": {
+      "brandName": "AZIENDA AGRICOLA CIPRIANA",
+      "classType": "Table Red Wine",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Italy"
+    }
+  },
+  {
+    "id": "real-filadoro-0224",
+    "name": "Filadoro",
+    "description": "Real COLA -- Wine -- Table White Wine",
+    "category": "real",
+    "bevType": "wine",
+    "file": "/test-labels/real/wine/18309001000224_filadoro_table-white-wine.jpg",
+    "ttbId": "18309001000224",
+    "applicationData": {
+      "brandName": "FILADORO",
+      "classType": "Table White Wine",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Italy"
+    }
+  },
+  {
+    "id": "real-filadoro-0219",
+    "name": "Filadoro",
+    "description": "Real COLA -- Wine -- Table Red Wine",
+    "category": "real",
+    "bevType": "wine",
+    "file": "/test-labels/real/wine/18309001000219_filadoro_table-red-wine.jpg",
+    "ttbId": "18309001000219",
+    "applicationData": {
+      "brandName": "FILADORO",
+      "classType": "Table Red Wine",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Italy"
+    }
+  },
+  {
+    "id": "real-cascina-alberta-0194",
+    "name": "Cascina Alberta - Giacone",
+    "description": "Real COLA -- Wine -- Dessert / Port / Sherry / (cooking) Wine",
+    "category": "real",
+    "bevType": "wine",
+    "file": "/test-labels/real/wine/18118001000194_cascina-alberta_dessert-port-sherry-cooking-wi.jpg",
+    "ttbId": "18118001000194",
+    "applicationData": {
+      "brandName": "CASCINA ALBERTA",
+      "classType": "Dessert / Port / Sherry / (cooking) Wine",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Italy"
+    }
+  },
+  {
+    "id": "real-tenuta-san-jacopo-1049",
+    "name": "Tenuta San Jacopo - Poggio Ai Grilli Riserva",
+    "description": "Real COLA -- Wine -- Table Red Wine",
+    "category": "real",
+    "bevType": "wine",
+    "file": "/test-labels/real/wine/18108001001049_tenuta-san-jacopo_table-red-wine.jpg",
+    "ttbId": "18108001001049",
+    "applicationData": {
+      "brandName": "TENUTA SAN JACOPO",
+      "classType": "Table Red Wine",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Italy"
+    }
+  },
+  {
+    "id": "real-tenuta-san-jacopo-1044",
+    "name": "Tenuta San Jacopo - Poggio Ai Grilli",
+    "description": "Real COLA -- Wine -- Table Red Wine",
+    "category": "real",
+    "bevType": "wine",
+    "file": "/test-labels/real/wine/18108001001044_tenuta-san-jacopo_table-red-wine.jpg",
+    "ttbId": "18108001001044",
+    "applicationData": {
+      "brandName": "TENUTA SAN JACOPO",
+      "classType": "Table Red Wine",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Italy"
+    }
+  },
+  {
+    "id": "real-corte-adagio-0983",
+    "name": "Corte Adagio",
+    "description": "Real COLA -- Wine -- Table White Wine",
+    "category": "real",
+    "bevType": "wine",
+    "file": "/test-labels/real/wine/18108001000983_corte-adagio_table-white-wine.jpg",
+    "ttbId": "18108001000983",
+    "applicationData": {
+      "brandName": "CORTE ADAGIO",
+      "classType": "Table White Wine",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Italy"
+    }
+  },
+  {
+    "id": "real-corte-adagio-0978",
+    "name": "Corte Adagio",
+    "description": "Real COLA -- Wine -- Table White Wine",
+    "category": "real",
+    "bevType": "wine",
+    "file": "/test-labels/real/wine/18108001000978_corte-adagio_table-white-wine.jpg",
+    "ttbId": "18108001000978",
+    "applicationData": {
+      "brandName": "CORTE ADAGIO",
+      "classType": "Table White Wine",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Italy"
+    }
+  },
+  {
+    "id": "real-corte-adagio-0971",
+    "name": "Corte Adagio",
+    "description": "Real COLA -- Wine -- Table White Wine",
+    "category": "real",
+    "bevType": "wine",
+    "file": "/test-labels/real/wine/18108001000971_corte-adagio_table-white-wine.jpg",
+    "ttbId": "18108001000971",
+    "applicationData": {
+      "brandName": "CORTE ADAGIO",
+      "classType": "Table White Wine",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Italy"
+    }
+  },
+  {
+    "id": "real-corte-adagio-0966",
+    "name": "Corte Adagio",
+    "description": "Real COLA -- Wine -- Table Red Wine",
+    "category": "real",
+    "bevType": "wine",
+    "file": "/test-labels/real/wine/18108001000966_corte-adagio_table-red-wine.jpg",
+    "ttbId": "18108001000966",
+    "applicationData": {
+      "brandName": "CORTE ADAGIO",
+      "classType": "Table Red Wine",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Italy"
+    }
+  },
+  {
+    "id": "real-corte-adagio-0957",
+    "name": "Corte Adagio",
+    "description": "Real COLA -- Wine -- Table Red Wine",
+    "category": "real",
+    "bevType": "wine",
+    "file": "/test-labels/real/wine/18108001000957_corte-adagio_table-red-wine.jpg",
+    "ttbId": "18108001000957",
+    "applicationData": {
+      "brandName": "CORTE ADAGIO",
+      "classType": "Table Red Wine",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Italy"
+    }
+  },
+  {
+    "id": "real-corte-adagio-0950",
+    "name": "Corte Adagio",
+    "description": "Real COLA -- Wine -- Table Red Wine",
+    "category": "real",
+    "bevType": "wine",
+    "file": "/test-labels/real/wine/18108001000950_corte-adagio_table-red-wine.jpg",
+    "ttbId": "18108001000950",
+    "applicationData": {
+      "brandName": "CORTE ADAGIO",
+      "classType": "Table Red Wine",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Italy"
+    }
+  },
+  {
+    "id": "real-corte-adagio-0943",
+    "name": "Corte Adagio",
+    "description": "Real COLA -- Wine -- Table Red Wine",
     "category": "real",
     "bevType": "wine",
     "file": "/test-labels/real/wine/18108001000943_corte-adagio_table-red-wine.jpg",
     "ttbId": "18108001000943",
-    "expectedResult": "Brand name detected. Class/type reads as Merlot (varietal on label).",
     "applicationData": {
       "brandName": "CORTE ADAGIO",
-      "classType": "Merlot",
-      "alcoholContent": "13%",
+      "classType": "Table Red Wine",
+      "alcoholContent": "",
       "netContents": "750 mL",
       "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
       "countryOfOrigin": "Product of Italy"
+    }
+  },
+  {
+    "id": "real-karnobatska-0289",
+    "name": "Karnobatska",
+    "description": "Real COLA -- Spirits -- Other Foreign Brandy",
+    "category": "real",
+    "bevType": "distilled_spirits",
+    "file": "/test-labels/real/distilled_spirits/18227001000289_karnobatska_other-foreign-brandy.jpg",
+    "ttbId": "18227001000289",
+    "applicationData": {
+      "brandName": "KARNOBATSKA",
+      "classType": "Other Foreign Brandy",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Bulgaria"
+    }
+  },
+  {
+    "id": "real-hanami-0077",
+    "name": "Hanami",
+    "description": "Real COLA -- Spirits -- Other Gin",
+    "category": "real",
+    "bevType": "distilled_spirits",
+    "file": "/test-labels/real/distilled_spirits/15328001000077_hanami_other-gin-fb.jpg",
+    "ttbId": "15328001000077",
+    "applicationData": {
+      "brandName": "HANAMI",
+      "classType": "Other Gin",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Netherlands"
+    }
+  },
+  {
+    "id": "real-south-bank-0203",
+    "name": "South Bank - London Dry",
+    "description": "Real COLA -- Spirits -- London Dry Distilled Gin",
+    "category": "real",
+    "bevType": "distilled_spirits",
+    "file": "/test-labels/real/distilled_spirits/15302001000203_south-bank_london-dry-distilled-gin-fb.jpg",
+    "ttbId": "15302001000203",
+    "applicationData": {
+      "brandName": "SOUTH BANK",
+      "classType": "London Dry Distilled Gin",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of United Kingdom"
+    }
+  },
+  {
+    "id": "real-lafayette-spice-flavored-whiskey-0052",
+    "name": "Lafayette Spice Flavored Whiskey",
+    "description": "Real COLA -- Spirits -- Other Whisky (flavored)",
+    "category": "real",
+    "bevType": "distilled_spirits",
+    "file": "/test-labels/real/distilled_spirits/17010001000052_lafayette-spice-flavored-whiskey_other-whisky-flavored.jpg",
+    "ttbId": "17010001000052",
+    "applicationData": {
+      "brandName": "LAFAYETTE SPICE FLAVORED WHISKEY",
+      "classType": "Other Whisky (flavored)",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Utah"
+    }
+  },
+  {
+    "id": "real-woodford-reserve-0031",
+    "name": "Woodford Reserve - Double Oaked Single Barrel Buy The Barre",
+    "description": "Real COLA -- Spirits -- Straight Bourbon Whisky",
+    "category": "real",
+    "bevType": "distilled_spirits",
+    "file": "/test-labels/real/distilled_spirits/15061001000031_woodford-reserve_straight-bourbon-whisky.jpg",
+    "ttbId": "15061001000031",
+    "applicationData": {
+      "brandName": "WOODFORD RESERVE",
+      "classType": "Straight Bourbon Whisky",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Colorado"
+    }
+  },
+  {
+    "id": "real-sortilege-0537",
+    "name": "Sortilege - Maple Cream",
+    "description": "Real COLA -- Spirits -- Other Liqueur (cremes or Creams)",
+    "category": "real",
+    "bevType": "distilled_spirits",
+    "file": "/test-labels/real/distilled_spirits/14351001000537_sortilege_other-liqueur-cremes-or-creams.jpg",
+    "ttbId": "14351001000537",
+    "applicationData": {
+      "brandName": "SORTILEGE",
+      "classType": "Other Liqueur (cremes or Creams)",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Canada"
+    }
+  },
+  {
+    "id": "real-casamigos-0632",
+    "name": "Casamigos - Reposado",
+    "description": "Real COLA -- Spirits -- Tequila",
+    "category": "real",
+    "bevType": "distilled_spirits",
+    "file": "/test-labels/real/distilled_spirits/14132001000632_casamigos_tequila-fb.jpg",
+    "ttbId": "14132001000632",
+    "applicationData": {
+      "brandName": "CASAMIGOS",
+      "classType": "Tequila",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Mexico"
+    }
+  },
+  {
+    "id": "real-casamigos-0629",
+    "name": "Casamigos - Blanco",
+    "description": "Real COLA -- Spirits -- Tequila",
+    "category": "real",
+    "bevType": "distilled_spirits",
+    "file": "/test-labels/real/distilled_spirits/14132001000629_casamigos_tequila-fb.jpg",
+    "ttbId": "14132001000629",
+    "applicationData": {
+      "brandName": "CASAMIGOS",
+      "classType": "Tequila",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Mexico"
+    }
+  },
+  {
+    "id": "real-casamigos-0626",
+    "name": "Casamigos - Anejo",
+    "description": "Real COLA -- Spirits -- Tequila",
+    "category": "real",
+    "bevType": "distilled_spirits",
+    "file": "/test-labels/real/distilled_spirits/14132001000626_casamigos_tequila-fb.jpg",
+    "ttbId": "14132001000626",
+    "applicationData": {
+      "brandName": "CASAMIGOS",
+      "classType": "Tequila",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Mexico"
+    }
+  },
+  {
+    "id": "real-monkey-47-0202",
+    "name": "Monkey 47",
+    "description": "Real COLA -- Spirits -- Other Gin",
+    "category": "real",
+    "bevType": "distilled_spirits",
+    "file": "/test-labels/real/distilled_spirits/14051001000202_monkey-47_other-gin-fb.jpg",
+    "ttbId": "14051001000202",
+    "applicationData": {
+      "brandName": "MONKEY 47",
+      "classType": "Other Gin",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Germany"
+    }
+  },
+  {
+    "id": "real-casamigos-0131",
+    "name": "Casamigos - Reposado",
+    "description": "Real COLA -- Spirits -- Tequila",
+    "category": "real",
+    "bevType": "distilled_spirits",
+    "file": "/test-labels/real/distilled_spirits/14049001000131_casamigos_tequila-fb.jpg",
+    "ttbId": "14049001000131",
+    "applicationData": {
+      "brandName": "CASAMIGOS",
+      "classType": "Tequila",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Mexico"
+    }
+  },
+  {
+    "id": "real-casamigos-0125",
+    "name": "Casamigos - Blanco",
+    "description": "Real COLA -- Spirits -- Tequila",
+    "category": "real",
+    "bevType": "distilled_spirits",
+    "file": "/test-labels/real/distilled_spirits/14049001000125_casamigos_tequila-fb.jpg",
+    "ttbId": "14049001000125",
+    "applicationData": {
+      "brandName": "CASAMIGOS",
+      "classType": "Tequila",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Mexico"
+    }
+  },
+  {
+    "id": "real-casamigos-0115",
+    "name": "Casamigos - Anejo",
+    "description": "Real COLA -- Spirits -- Tequila",
+    "category": "real",
+    "bevType": "distilled_spirits",
+    "file": "/test-labels/real/distilled_spirits/14049001000115_casamigos_tequila-fb.jpg",
+    "ttbId": "14049001000115",
+    "applicationData": {
+      "brandName": "CASAMIGOS",
+      "classType": "Tequila",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Mexico"
+    }
+  },
+  {
+    "id": "real-monkey-47-0512",
+    "name": "Monkey 47",
+    "description": "Real COLA -- Spirits -- Other Distilled Gin",
+    "category": "real",
+    "bevType": "distilled_spirits",
+    "file": "/test-labels/real/distilled_spirits/13241001000512_monkey-47_other-distilled-gin-fb.jpg",
+    "ttbId": "13241001000512",
+    "applicationData": {
+      "brandName": "MONKEY 47",
+      "classType": "Other Distilled Gin",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Germany"
+    }
+  },
+  {
+    "id": "real-barenjager-0441",
+    "name": "Barenjager - Honey & Tea",
+    "description": "Real COLA -- Spirits -- Other Herb & Seed Cordials / Liqueurs",
+    "category": "real",
+    "bevType": "distilled_spirits",
+    "file": "/test-labels/real/distilled_spirits/13100001000441_barenjager_other-herb-seed-cordials-lique.jpg",
+    "ttbId": "13100001000441",
+    "applicationData": {
+      "brandName": "BARENJAGER",
+      "classType": "Other Herb & Seed Cordials / Liqueurs",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Germany"
+    }
+  },
+  {
+    "id": "real-barenjager-0440",
+    "name": "Barenjager - Honey & Tea",
+    "description": "Real COLA -- Spirits -- Other Herb & Seed Cordials / Liqueurs",
+    "category": "real",
+    "bevType": "distilled_spirits",
+    "file": "/test-labels/real/distilled_spirits/13100001000440_barenjager_other-herb-seed-cordials-lique.jpg",
+    "ttbId": "13100001000440",
+    "applicationData": {
+      "brandName": "BARENJAGER",
+      "classType": "Other Herb & Seed Cordials / Liqueurs",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Germany"
+    }
+  },
+  {
+    "id": "real-barenjager-0727",
+    "name": "Barenjager",
+    "description": "Real COLA -- Spirits -- Other Herb & Seed Cordials / Liqueurs",
+    "category": "real",
+    "bevType": "distilled_spirits",
+    "file": "/test-labels/real/distilled_spirits/11038001000727_barenjager_other-herb-seed-cordials-lique.jpg",
+    "ttbId": "11038001000727",
+    "applicationData": {
+      "brandName": "BARENJAGER",
+      "classType": "Other Herb & Seed Cordials / Liqueurs",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Germany"
+    }
+  },
+  {
+    "id": "real-barenjager-0725",
+    "name": "Barenjager",
+    "description": "Real COLA -- Spirits -- Other Herb & Seed Cordials / Liqueurs",
+    "category": "real",
+    "bevType": "distilled_spirits",
+    "file": "/test-labels/real/distilled_spirits/11038001000725_barenjager_other-herb-seed-cordials-lique.jpg",
+    "ttbId": "11038001000725",
+    "applicationData": {
+      "brandName": "BARENJAGER",
+      "classType": "Other Herb & Seed Cordials / Liqueurs",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Germany"
+    }
+  },
+  {
+    "id": "real-thank-you-2019-0181",
+    "name": "Thank You 2019",
+    "description": "Real COLA -- Beer/Malt -- Ale",
+    "category": "real",
+    "bevType": "malt_beverage",
+    "file": "/test-labels/real/malt_beverage/19085001000181_thank-you-2019_ale.jpg",
+    "ttbId": "19085001000181",
+    "applicationData": {
+      "brandName": "THANK YOU 2019",
+      "classType": "Ale",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Maine"
+    }
+  },
+  {
+    "id": "real-fall-2018-0535",
+    "name": "Fall 2018",
+    "description": "Real COLA -- Beer/Malt -- Ale",
+    "category": "real",
+    "bevType": "malt_beverage",
+    "file": "/test-labels/real/malt_beverage/18225001000535_fall-2018_ale.jpg",
+    "ttbId": "18225001000535",
+    "applicationData": {
+      "brandName": "FALL 2018",
+      "classType": "Ale",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Maine"
+    }
+  },
+  {
+    "id": "real-fall-2018-0532",
+    "name": "Fall 2018",
+    "description": "Real COLA -- Beer/Malt -- Stout",
+    "category": "real",
+    "bevType": "malt_beverage",
+    "file": "/test-labels/real/malt_beverage/18225001000532_fall-2018_stout.jpg",
+    "ttbId": "18225001000532",
+    "applicationData": {
+      "brandName": "FALL 2018",
+      "classType": "Stout",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Maine"
+    }
+  },
+  {
+    "id": "real-victoria-0304",
+    "name": "Victoria",
+    "description": "Real COLA -- Beer/Malt -- Ale",
+    "category": "real",
+    "bevType": "malt_beverage",
+    "file": "/test-labels/real/malt_beverage/14251001000304_victoria_ale.jpg",
+    "ttbId": "14251001000304",
+    "applicationData": {
+      "brandName": "VICTORIA",
+      "classType": "Ale",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Mexico"
+    }
+  },
+  {
+    "id": "real-cerveza-barrilito-0337",
+    "name": "Cerveza Barrilito - Beer",
+    "description": "Real COLA -- Beer/Malt -- Beer",
+    "category": "real",
+    "bevType": "malt_beverage",
+    "file": "/test-labels/real/malt_beverage/16169001000337_cerveza-barrilito_beer.jpg",
+    "ttbId": "16169001000337",
+    "applicationData": {
+      "brandName": "CERVEZA BARRILITO",
+      "classType": "Beer",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Mexico"
+    }
+  },
+  {
+    "id": "real-the-substance-0314",
+    "name": "The Substance",
+    "description": "Real COLA -- Beer/Malt -- Ale",
+    "category": "real",
+    "bevType": "malt_beverage",
+    "file": "/test-labels/real/malt_beverage/13301001000314_the-substance_ale.jpg",
+    "ttbId": "13301001000314",
+    "applicationData": {
+      "brandName": "THE SUBSTANCE",
+      "classType": "Ale",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Maine"
+    }
+  },
+  {
+    "id": "real-preserve-protect-0599",
+    "name": "Preserve & Protect",
+    "description": "Real COLA -- Beer/Malt -- Ale",
+    "category": "real",
+    "bevType": "malt_beverage",
+    "file": "/test-labels/real/malt_beverage/19030001000599_preserve-protect_ale.jpg",
+    "ttbId": "19030001000599",
+    "applicationData": {
+      "brandName": "PRESERVE & PROTECT",
+      "classType": "Ale",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Maine"
+    }
+  },
+  {
+    "id": "real-burley-oak-0322",
+    "name": "Burley Oak - Sequoia Sap",
+    "description": "Real COLA -- Beer/Malt -- Ale",
+    "category": "real",
+    "bevType": "malt_beverage",
+    "file": "/test-labels/real/malt_beverage/17285001000322_burley-oak_ale.jpg",
+    "ttbId": "17285001000322",
+    "applicationData": {
+      "brandName": "BURLEY OAK",
+      "classType": "Ale",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Maryland"
+    }
+  },
+  {
+    "id": "real-trader-joe-s-0287",
+    "name": "Trader Joe's - Providential",
+    "description": "Real COLA -- Beer/Malt -- Malt Beverages Specialities",
+    "category": "real",
+    "bevType": "malt_beverage",
+    "file": "/test-labels/real/malt_beverage/16035001000287_trader-joe-s_malt-beverages-specialities.jpg",
+    "ttbId": "16035001000287",
+    "applicationData": {
+      "brandName": "TRADER JOE'S",
+      "classType": "Malt Beverages Specialities",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Canada"
+    }
+  },
+  {
+    "id": "real-the-lagunitas-brewing-company-0774",
+    "name": "The Lagunitas Brewing Company - Passion Grass",
+    "description": "Real COLA -- Beer/Malt -- Malt Beverages Specialities",
+    "category": "real",
+    "bevType": "malt_beverage",
+    "file": "/test-labels/real/malt_beverage/18128001000774_the-lagunitas-brewing-company_malt-beverages-specialities-fl.jpg",
+    "ttbId": "18128001000774",
+    "applicationData": {
+      "brandName": "THE LAGUNITAS BREWING COMPANY",
+      "classType": "Malt Beverages Specialities",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of California"
+    }
+  },
+  {
+    "id": "real-separatist-beer-project-0269",
+    "name": "Separatist Beer Project - Pineapple Smoosh",
+    "description": "Real COLA -- Beer/Malt -- Ale",
+    "category": "real",
+    "bevType": "malt_beverage",
+    "file": "/test-labels/real/malt_beverage/19009001000269_separatist-beer-project_ale.jpg",
+    "ttbId": "19009001000269",
+    "applicationData": {
+      "brandName": "SEPARATIST BEER PROJECT",
+      "classType": "Ale",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Pennsylvania"
+    }
+  },
+  {
+    "id": "real-athletic-brewing-company-0106",
+    "name": "Athletic Brewing Company - Cerveza Atletica Non-alcoholic Light Copper",
+    "description": "Real COLA -- Beer/Malt -- Cereal Beverages - Near Beer (non Alcoholic)",
+    "category": "real",
+    "bevType": "malt_beverage",
+    "file": "/test-labels/real/malt_beverage/19087001000106_athletic-brewing-company_cereal-beverages-near-beer-non.jpg",
+    "ttbId": "19087001000106",
+    "applicationData": {
+      "brandName": "ATHLETIC BREWING COMPANY",
+      "classType": "Cereal Beverages - Near Beer (non Alcoholic)",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Connecticut"
+    }
+  },
+  {
+    "id": "real-son-of-sapping-mammoth-0632",
+    "name": "Son Of Sapping Mammoth",
+    "description": "Real COLA -- Beer/Malt -- Ale",
+    "category": "real",
+    "bevType": "malt_beverage",
+    "file": "/test-labels/real/malt_beverage/18171001000632_son-of-sapping-mammoth_ale.jpg",
+    "ttbId": "18171001000632",
+    "applicationData": {
+      "brandName": "SON OF SAPPING MAMMOTH",
+      "classType": "Ale",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Maine"
+    }
+  },
+  {
+    "id": "real-son-of-sapping-mammoth-0242",
+    "name": "Son Of Sapping Mammoth",
+    "description": "Real COLA -- Beer/Malt -- Ale",
+    "category": "real",
+    "bevType": "malt_beverage",
+    "file": "/test-labels/real/malt_beverage/18169001000242_son-of-sapping-mammoth_ale.jpeg",
+    "ttbId": "18169001000242",
+    "applicationData": {
+      "brandName": "SON OF SAPPING MAMMOTH",
+      "classType": "Ale",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Maine"
+    }
+  },
+  {
+    "id": "real-pals-brewing-company-0744",
+    "name": "Pals Brewing Company - Jalapeno Cream Ale",
+    "description": "Real COLA -- Beer/Malt -- Malt Beverages Specialities",
+    "category": "real",
+    "bevType": "malt_beverage",
+    "file": "/test-labels/real/malt_beverage/18085001000744_pals-brewing-company_malt-beverages-specialities-fl.jpg",
+    "ttbId": "18085001000744",
+    "applicationData": {
+      "brandName": "PALS BREWING COMPANY",
+      "classType": "Malt Beverages Specialities",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Nebraska"
+    }
+  },
+  {
+    "id": "real-weez-0041",
+    "name": "Weez",
+    "description": "Real COLA -- Beer/Malt -- Ale",
+    "category": "real",
+    "bevType": "malt_beverage",
+    "file": "/test-labels/real/malt_beverage/14005001000041_weez_ale.jpg",
+    "ttbId": "14005001000041",
+    "applicationData": {
+      "brandName": "WEEZ",
+      "classType": "Ale",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Maine"
+    }
+  },
+  {
+    "id": "real-weez-0278",
+    "name": "Weez",
+    "description": "Real COLA -- Beer/Malt -- Ale",
+    "category": "real",
+    "bevType": "malt_beverage",
+    "file": "/test-labels/real/malt_beverage/13099001000278_weez_ale.jpg",
+    "ttbId": "13099001000278",
+    "applicationData": {
+      "brandName": "WEEZ",
+      "classType": "Ale",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Maine"
+    }
+  },
+  {
+    "id": "real-burning-money-0290",
+    "name": "Burning Money",
+    "description": "Real COLA -- Beer/Malt -- Ale",
+    "category": "real",
+    "bevType": "malt_beverage",
+    "file": "/test-labels/real/malt_beverage/19049001000290_burning-money_ale.jpg",
+    "ttbId": "19049001000290",
+    "applicationData": {
+      "brandName": "BURNING MONEY",
+      "classType": "Ale",
+      "alcoholContent": "",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of New York"
     }
   }
 ]
