@@ -41,8 +41,8 @@ Project activity history for the TTB Label Verification App. Maintained througho
 
 ## Current Project State
 
-**Phase:** DEPLOYED AND VERIFIED. Ready for submission.
-**Live URL:** https://ttb-label-verification.delightfulbeach-49152395.eastus.azurecontainerapps.io
+**Phase:** Commit-ready. UX improvements, demo mode, test framework, real labels all complete. Needs Azure redeploy.
+**Live URL:** https://ttb-label-verification.delightfulbeach-49152395.eastus.azurecontainerapps.io (pending redeploy with latest changes)
 **Plan reference:** `.cursor/plans/ttb_label_verification_app_cf38bd97.plan.md`
 
 ---
@@ -281,3 +281,41 @@ Project activity history for the TTB Label Verification App. Maintained througho
 - Rewrote README for professional delivery: added screenshots, Documentation Guide table (maps evaluator questions to docs), version numbers in tech stack, expanded project structure with inline descriptions, trade-offs as a table, cleaner closing
 - Added links to ACTIVITY_LOG.md and all consideration docs from README so evaluators can navigate the full documentation
 - Moved screenshots to `docs/screenshots/` for clean organization
+
+- **2026-02-10 ~6:12 PM** -- Expanded `public/test-labels/real/` from placeholder state to a balanced public dataset of 54 real labels (18 distilled spirits, 18 wine, 18 malt beverage) sourced from TTB COLAs Online printable attachments. Added `scripts/collect_public_labels.py`, generated `real/metadata.json`, updated `public/test-labels/README.md`, and cleaned folder contents to match metadata exactly.
+
+### Session 11 -- `v1.1-ux-demo-tests`
+
+| | |
+|---|---|
+| **Date** | 2026-02-10 / 2026-02-11 |
+| **Time** | Multi-session continuation |
+| **Phase** | UX improvements, demo mode, test framework, real labels |
+| **Commit** | `v1.1-ux-demo-tests` |
+
+**What was done:**
+
+Real label dataset:
+- Built `scripts/collect_public_labels.py` to automate collection from TTB COLAs Online
+- Downloaded 54 real label images into `public/test-labels/real/` (18 spirits, 18 wine, 18 malt beverage)
+- Added `public/test-labels/real/metadata.json` with TTB IDs, category, class/type, origin, source URLs
+
+UX improvements (found during manual testing with Scott):
+- Replaced browser `alert()` with inline error UI in LabelUploader (file type + size validation)
+- Added label image reference with click-to-enlarge lightbox below the application form
+- Fixed verify flow: form stays editable after verification, "Re-Verify With Updated Data" button replaces one-shot verify
+- Added "New Label" button always visible in top-right after extraction
+- Example label picker stays visible throughout the flow (not just on upload step)
+- Lightbox uses raw public URL for full-resolution display, `unoptimized` Image thumbnails
+
+Demo mode:
+- "Fill Demo Data" button directly on ApplicationForm (self-contained, matches OCR class/type to correct test data)
+- Button pulses amber when form is empty, shows "Re-fill Demo Data" when form has values
+- Debug console logs OCR timing, field count, warning status, per-field verification results
+- Batch page "Load All 5 Example Labels" button in demo mode
+
+Testing:
+- Added vitest test framework (39 unit tests across 4 files: fuzzy match, normalizers, warning validator, field extractor)
+- Added `scripts/test-ui-flow.ts` integration test (API-level flow testing: 4 label scenarios + batch + re-verify) -- ALL PASSED
+- Added transparency statement in APPROACH.md explaining AI-assisted development process
+- Added TTB label research doc (`docs/label-research-requirements.md`) from ttb.gov labeling resources

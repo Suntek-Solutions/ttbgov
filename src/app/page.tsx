@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -19,6 +20,83 @@ import type {
 
 type Step = "upload" | "extracted" | "results";
 
+function LabelImageReference({
+  src,
+  filename,
+  extractTime,
+}: {
+  src: string;
+  filename: string;
+  extractTime: number;
+}) {
+  const [enlarged, setEnlarged] = useState(false);
+
+  return (
+    <>
+      <div className="rounded-lg border bg-white p-3">
+        <p className="mb-2 text-xs font-medium text-gray-500">
+          Label Reference -- click to enlarge
+        </p>
+        <button
+          onClick={() => setEnlarged(true)}
+          className="group relative w-full overflow-hidden rounded-lg border transition-shadow hover:shadow-md"
+        >
+          <Image
+            src={src}
+            alt="Uploaded label"
+            width={400}
+            height={280}
+            className="w-full object-contain"
+          />
+          <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/10">
+            <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-gray-700 opacity-0 shadow transition-opacity group-hover:opacity-100">
+              Click to enlarge
+            </span>
+          </div>
+        </button>
+        <p className="mt-2 text-xs text-gray-500">
+          {filename} -- extracted in {extractTime}ms
+        </p>
+      </div>
+
+      {/* Lightbox overlay */}
+      {enlarged && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 cursor-pointer"
+          onClick={() => setEnlarged(false)}
+        >
+          <div
+            className="relative flex flex-col items-center p-6"
+            style={{ maxWidth: "92vw", maxHeight: "92vh" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={src}
+              alt="Label full view"
+              style={{
+                maxHeight: "82vh",
+                maxWidth: "88vw",
+                width: "auto",
+                height: "auto",
+                objectFit: "contain",
+              }}
+              className="rounded-lg shadow-2xl bg-white"
+            />
+            <button
+              onClick={() => setEnlarged(false)}
+              className="absolute top-2 right-2 flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-xl text-white hover:bg-black/80 z-10"
+            >
+              &times;
+            </button>
+            <p className="mt-3 text-center text-sm text-white/70">{filename} -- click outside or X to close</p>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 const EMPTY_APPLICATION: ApplicationData = {
   brandName: "",
   classType: "",
@@ -32,6 +110,7 @@ const EMPTY_APPLICATION: ApplicationData = {
 export default function Home() {
   const [step, setStep] = useState<Step>("upload");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [extractedFields, setExtractedFields] = useState<ExtractedFieldsType | null>(null);
   const [extractTime, setExtractTime] = useState(0);
   const [applicationData, setApplicationData] = useState<ApplicationData>(EMPTY_APPLICATION);
@@ -39,19 +118,27 @@ export default function Home() {
   const [isExtracting, setIsExtracting] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [demoPrefill, setDemoPrefill] = useState<ApplicationData | null>(null);
   const { demoMode, addLog } = useDemo();
 
-  const handleImageSelected = (file: File) => {
+  const handleImageSelected = (file: File, prefillData?: ApplicationData, rawUrl?: string) => {
     setSelectedFile(file);
+    // Use raw public URL for preview if available (full resolution), otherwise blob URL
+    setImagePreview(rawUrl ?? URL.createObjectURL(file));
     if (demoMode) addLog(`Image selected: ${file.name} (${(file.size / 1024).toFixed(0)}KB)`);
-    if (step !== "upload") {
-      setExtractedFields(null);
-      setVerifyResult(null);
-      setStep("upload");
+    // Reset downstream state
+    setExtractedFields(null);
+    setVerifyResult(null);
+    // Pre-fill application data immediately if provided
+    setApplicationData(prefillData ?? EMPTY_APPLICATION);
+    setDemoPrefill(prefillData ?? null);
+    setStep("upload");
+    setError(null);
+    if (prefillData && demoMode) {
+      addLog("Application data pre-filled from demo example");
     }
   };
 
-  // Step 1: Extract text from uploaded label image
   const handleExtract = async () => {
     if (!selectedFile) return;
 
@@ -100,7 +187,6 @@ export default function Home() {
     }
   };
 
-  // Step 2: Verify extracted fields against application data
   const handleVerify = async () => {
     if (!extractedFields) return;
 
@@ -127,7 +213,7 @@ export default function Home() {
       }
 
       setVerifyResult(data);
-      setStep("results");
+      // Stay on "extracted" step so form remains editable for re-verification
 
       if (demoMode) {
         addLog(`Verification complete in ${data.processingTimeMs}ms -- ${data.overall?.toUpperCase()}`);
@@ -143,10 +229,10 @@ export default function Home() {
     }
   };
 
-  // Reset to start over
   const handleReset = () => {
     setStep("upload");
     setSelectedFile(null);
+    setImagePreview(null);
     setExtractedFields(null);
     setExtractTime(0);
     setApplicationData(EMPTY_APPLICATION);
@@ -157,14 +243,21 @@ export default function Home() {
 
   return (
     <div className={`space-y-6 ${demoMode ? "pb-[180px]" : ""}`}>
-      {/* Page title */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          Label Verification
-        </h1>
-        <p className="mt-1 text-gray-600">
-          Upload a label image, enter the application data, and verify they match.
-        </p>
+      {/* Page title + New Label button */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Label Verification
+          </h1>
+          <p className="mt-1 text-gray-600">
+            Upload a label image, enter the application data, and verify they match.
+          </p>
+        </div>
+        {step !== "upload" && (
+          <Button onClick={handleReset} variant="outline" size="lg">
+            New Label
+          </Button>
+        )}
       </div>
 
       {/* Error display */}
@@ -174,96 +267,103 @@ export default function Home() {
         </div>
       )}
 
-      {/* Step 1: Upload and Extract */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">
-            Step 1: Upload Label Image
-          </CardTitle>
-          <CardDescription>
-            Upload a photo or scan of the alcohol label. The AI will extract text from the image.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Demo mode: example label picker */}
-          {demoMode && step === "upload" && (
-            <ExampleLabelPicker onSelect={handleImageSelected} />
-          )}
+      {/* Demo mode: example label picker (always visible in demo) */}
+      {demoMode && (
+        <ExampleLabelPicker onSelect={handleImageSelected} />
+      )}
 
+      {/* Step 1: Upload and Extract */}
+      {step === "upload" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              Step 1: Upload Label Image
+            </CardTitle>
+            <CardDescription>
+              Upload a photo or scan of the alcohol label. The AI will extract text from the image.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
           <LabelUploader
-            onImageSelected={handleImageSelected}
+            onImageSelected={(file) => handleImageSelected(file)}
             isProcessing={isExtracting}
           />
-          <Button
-            onClick={handleExtract}
-            disabled={!selectedFile || isExtracting}
-            size="lg"
-            className="w-full text-base"
-          >
-            {isExtracting ? "Extracting text from label..." : "Extract Label Text"}
-          </Button>
-        </CardContent>
-      </Card>
+            <Button
+              onClick={handleExtract}
+              disabled={!selectedFile || isExtracting}
+              size="lg"
+              className="w-full text-base"
+            >
+              {isExtracting ? "Extracting text from label..." : "Extract Label Text"}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Step 2: Review extracted fields + enter application data */}
       {step !== "upload" && extractedFields && (
         <>
-          <Separator />
-
           <div className="grid gap-6 lg:grid-cols-2">
-            {/* Left: Extracted fields from OCR */}
+            {/* Left column: Extracted fields */}
             <ExtractedFields
               fields={extractedFields}
               processingTimeMs={extractTime}
             />
 
-            {/* Right: Application data form */}
-            <ApplicationForm
-              data={applicationData}
-              onChange={setApplicationData}
-              disabled={isVerifying}
-            />
+            {/* Right column: Application form + label image reference */}
+            <div className="space-y-4">
+              <ApplicationForm
+                data={applicationData}
+                onChange={setApplicationData}
+                disabled={isVerifying}
+                extractedClassType={extractedFields?.classType.value}
+                extractedAbv={extractedFields?.alcoholContent.value}
+              />
+
+              {/* Label image reference -- click to enlarge */}
+              {imagePreview && (
+                <LabelImageReference
+                  src={imagePreview}
+                  filename={selectedFile?.name ?? "label"}
+                  extractTime={extractTime}
+                />
+              )}
+            </div>
           </div>
 
-          {step === "extracted" && (
-            <Button
-              onClick={handleVerify}
-              disabled={
-                isVerifying ||
-                !applicationData.brandName ||
-                !applicationData.classType ||
-                !applicationData.alcoholContent ||
-                !applicationData.netContents ||
-                !applicationData.governmentWarning
-              }
-              size="lg"
-              className="w-full text-base"
-            >
-              {isVerifying ? "Verifying..." : "Verify Label Against Application"}
-            </Button>
-          )}
-        </>
-      )}
-
-      {/* Step 3: Verification Results */}
-      {step === "results" && verifyResult && (
-        <>
-          <Separator />
-
-          <VerificationResults
-            overall={verifyResult.overall!}
-            results={verifyResult.results!}
-            processingTimeMs={verifyResult.processingTimeMs}
-          />
-
+          {/* Verify button -- always visible when we have extracted fields */}
           <Button
-            onClick={handleReset}
-            variant="outline"
+            onClick={handleVerify}
+            disabled={
+              isVerifying ||
+              !applicationData.brandName ||
+              !applicationData.classType ||
+              !applicationData.alcoholContent ||
+              !applicationData.netContents ||
+              !applicationData.governmentWarning
+            }
             size="lg"
             className="w-full text-base"
           >
-            Verify Another Label
+            {isVerifying
+              ? "Verifying..."
+              : verifyResult
+              ? "Re-Verify With Updated Data"
+              : "Verify Label Against Application"}
           </Button>
+
+          {/* Verification Results */}
+          {verifyResult && (
+            <>
+              <Separator />
+
+              <VerificationResults
+                overall={verifyResult.overall!}
+                results={verifyResult.results!}
+                processingTimeMs={verifyResult.processingTimeMs}
+              />
+            </>
+          )}
         </>
       )}
     </div>

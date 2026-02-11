@@ -73,6 +73,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExtractRe
     const arrayBuffer = await file.arrayBuffer();
     const imageBuffer = Buffer.from(arrayBuffer);
 
+    console.log(`[/api/extract] Received: ${file.name}, type: ${file.type}, size: ${(file.size / 1024).toFixed(0)}KB, buffer: ${imageBuffer.length} bytes`);
+
     // Preprocess image
     const preprocessed = await preprocessImage(imageBuffer);
 
