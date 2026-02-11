@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { LabelUploader } from "@/components/LabelUploader";
-import { ApplicationForm } from "@/components/ApplicationForm";
-import { ExtractedFields } from "@/components/ExtractedFields";
+import { LabelComparisonView } from "@/components/LabelComparisonView";
 import { VerificationResults } from "@/components/VerificationResults";
 import { ExampleLabelPicker } from "@/components/ExampleLabelPicker";
 import { useDemo } from "@/lib/demo-context";
@@ -123,19 +122,18 @@ export default function Home() {
 
   const handleImageSelected = (file: File, prefillData?: ApplicationData, rawUrl?: string) => {
     setSelectedFile(file);
-    // Use raw public URL for preview if available (full resolution), otherwise blob URL
     setImagePreview(rawUrl ?? URL.createObjectURL(file));
     if (demoMode) addLog(`Image selected: ${file.name} (${(file.size / 1024).toFixed(0)}KB)`);
     // Reset downstream state
     setExtractedFields(null);
     setVerifyResult(null);
-    // Pre-fill application data immediately if provided
-    setApplicationData(prefillData ?? EMPTY_APPLICATION);
-    setDemoPrefill(prefillData ?? null);
     setStep("upload");
     setError(null);
-    if (prefillData && demoMode) {
-      addLog("Application data pre-filled from demo example");
+    // Pre-fill application data if provided; keep existing demoPrefill if no new data
+    if (prefillData) {
+      setApplicationData(prefillData);
+      setDemoPrefill(prefillData);
+      if (demoMode) addLog("Application data pre-filled from demo example");
     }
   };
 
@@ -236,6 +234,7 @@ export default function Home() {
     setExtractedFields(null);
     setExtractTime(0);
     setApplicationData(EMPTY_APPLICATION);
+    setDemoPrefill(null);
     setVerifyResult(null);
     setError(null);
     if (demoMode) addLog("Reset -- ready for new label");
@@ -300,26 +299,23 @@ export default function Home() {
         </Card>
       )}
 
-      {/* Step 2: Review extracted fields + enter application data */}
+      {/* Step 2: Compare extracted fields with application data */}
       {step !== "upload" && extractedFields && (
         <>
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Left column: Extracted fields */}
-            <ExtractedFields
-              fields={extractedFields}
+          <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
+            {/* Main: Integrated comparison view */}
+            <LabelComparisonView
+              extracted={extractedFields}
+              applicationData={applicationData}
+              onChange={setApplicationData}
+              verifyResults={verifyResult?.results ?? undefined}
+              disabled={isVerifying}
+              demoFillData={demoMode ? demoPrefill : null}
               processingTimeMs={extractTime}
             />
 
-            {/* Right column: Application form + label image reference */}
-            <div className="space-y-4">
-              <ApplicationForm
-                data={applicationData}
-                onChange={setApplicationData}
-                disabled={isVerifying}
-                demoFillData={demoMode ? demoPrefill : null}
-              />
-
-              {/* Label image reference -- click to enlarge */}
+            {/* Side: Label image reference */}
+            <div className="space-y-3">
               {imagePreview && (
                 <LabelImageReference
                   src={imagePreview}
@@ -351,17 +347,22 @@ export default function Home() {
               : "Verify Label Against Application"}
           </Button>
 
-          {/* Verification Results */}
+          {/* Verification summary */}
           {verifyResult && (
-            <>
-              <Separator />
-
-              <VerificationResults
-                overall={verifyResult.overall!}
-                results={verifyResult.results!}
-                processingTimeMs={verifyResult.processingTimeMs}
-              />
-            </>
+            <div className={`rounded-lg border-2 p-4 text-center ${
+              verifyResult.overall === "pass"
+                ? "border-green-300 bg-green-50"
+                : "border-red-300 bg-red-50"
+            }`}>
+              <span className={`text-lg font-bold ${
+                verifyResult.overall === "pass" ? "text-green-700" : "text-red-700"
+              }`}>
+                {verifyResult.overall === "pass" ? "ALL FIELDS MATCH" : "VERIFICATION FAILED"}
+              </span>
+              <span className="ml-2 text-sm text-gray-500">
+                ({verifyResult.results?.filter(r => r.match).length}/{verifyResult.results?.length} pass -- {verifyResult.processingTimeMs}ms)
+              </span>
+            </div>
           )}
         </>
       )}

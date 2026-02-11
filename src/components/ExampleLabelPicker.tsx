@@ -24,6 +24,7 @@ export function ExampleLabelPicker({ onSelect, mode = "single", onBatchSelect }:
   const [labels, setLabels] = useState<DemoLabel[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBatch, setSelectedBatch] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState<"scenarios" | "real">("scenarios");
 
   useEffect(() => {
     fetch("/test-labels/demo-labels.json")
@@ -129,22 +130,42 @@ export function ExampleLabelPicker({ onSelect, mode = "single", onBatchSelect }:
   }
 
   return (
-    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-4">
-      <p className="text-sm font-medium text-amber-800">
-        Demo Labels -- click to load label + auto-fill application data
-      </p>
-
-      {/* Generated test cases */}
-      <div>
-        <p className="mb-2 text-xs font-medium text-amber-700">
-          Test Scenarios ({generated.length})
+    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm font-medium text-amber-800">
+          Demo Labels ({labels.length})
         </p>
-        <div className="grid grid-cols-5 gap-2">
-          {generated.map((label) => (
+        <div className="flex gap-1">
+          <button
+            onClick={() => setActiveTab("scenarios")}
+            className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+              activeTab === "scenarios"
+                ? "bg-amber-300 text-amber-900"
+                : "bg-amber-100 text-amber-700 hover:bg-amber-200"
+            }`}
+          >
+            Test Scenarios ({generated.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("real")}
+            className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+              activeTab === "real"
+                ? "bg-amber-300 text-amber-900"
+                : "bg-amber-100 text-amber-700 hover:bg-amber-200"
+            }`}
+          >
+            Real COLA ({real.length})
+          </button>
+        </div>
+      </div>
+
+      <div className="max-h-[180px] overflow-y-auto rounded-md border border-amber-200 bg-white">
+        <div className="grid grid-cols-5 gap-1.5 p-2">
+          {(activeTab === "scenarios" ? generated : real).map((label) => (
             <button
               key={label.id}
               onClick={() => handleSingleSelect(label)}
-              className="group rounded-lg border border-amber-200 bg-white p-2 text-left transition-colors hover:border-amber-400 hover:bg-amber-50"
+              className="group rounded-lg border border-gray-150 bg-white p-1.5 text-left transition-colors hover:border-amber-400 hover:bg-amber-50"
             >
               <Image
                 src={label.file}
@@ -152,51 +173,15 @@ export function ExampleLabelPicker({ onSelect, mode = "single", onBatchSelect }:
                 width={240}
                 height={160}
                 unoptimized
-                className="mb-1.5 h-[50px] w-full rounded object-contain"
+                className="mb-1 h-[40px] w-full rounded object-contain"
               />
-              <p className="text-xs font-medium text-gray-800 truncate">
+              <p className="text-[10px] font-medium text-gray-800 truncate">
                 {label.name}
-              </p>
-              <p className="text-[10px] text-gray-500 truncate">
-                {label.description}
               </p>
             </button>
           ))}
         </div>
       </div>
-
-      {/* Real COLA labels */}
-      {real.length > 0 && (
-        <div>
-          <p className="mb-2 text-xs font-medium text-amber-700">
-            Real COLA Labels ({real.length})
-          </p>
-          <div className="grid grid-cols-5 gap-2">
-            {real.map((label) => (
-              <button
-                key={label.id}
-                onClick={() => handleSingleSelect(label)}
-                className="group rounded-lg border border-amber-200 bg-white p-2 text-left transition-colors hover:border-amber-400 hover:bg-amber-50"
-              >
-                <Image
-                  src={label.file}
-                  alt={label.name}
-                  width={240}
-                  height={160}
-                  unoptimized
-                  className="mb-1.5 h-[50px] w-full rounded object-contain"
-                />
-                <p className="text-xs font-medium text-gray-800 truncate">
-                  {label.name}
-                </p>
-                <p className="text-[10px] text-gray-500 truncate">
-                  {label.description}
-                </p>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -41,7 +41,7 @@ Project activity history for the TTB Label Verification App. Maintained througho
 
 ## Current Project State
 
-**Phase:** Full validation complete. All 59 labels tested. Ready for Azure redeploy and submission.
+**Phase:** UI polish and UX overhaul complete. Pending: Azure redeploy, OCR inversion fix for brand names.
 **Live URL:** https://ttb-label-verification.delightfulbeach-49152395.eastus.azurecontainerapps.io (pending redeploy with latest changes)
 **Plan reference:** `.cursor/plans/ttb_label_verification_app_cf38bd97.plan.md`
 
@@ -343,3 +343,39 @@ Testing:
 - Pipeline tests: 5/5 correct outcomes
 - Removed Monkey 47 and Lagunitas from earlier 8-label catalog (replaced with full 59)
 - Added `scripts/validate-all-labels.ts` for reproducible full-dataset validation
+
+### Session 13 -- `v1.4-ui-overhaul`
+
+| | |
+|---|---|
+| **Date** | 2026-02-11 (Tuesday) |
+| **Time** | Multi-hour continuation session |
+| **Phase** | UI/UX overhaul, demo system, brand name OCR research |
+| **Commit** | `v1.4-ui-overhaul` |
+
+**What was done:**
+
+UI/UX overhaul:
+- Replaced separate OCR fields + form with integrated `LabelComparisonView` component: OCR extracted value and application input on same row per field
+- Inline verification indicators (green checkmarks / red X) replace separate results card
+- Verification summary banner ("VERIFICATION FAILED 6/7 pass") replaces old detailed results component
+- Label image moved to sidebar with click-to-enlarge lightbox (native img tag for full resolution)
+- Re-verify flow: form stays editable after verification, button changes to "Re-Verify With Updated Data"
+- Global CSS: cursor pointer on all buttons
+
+Demo system improvements:
+- Compact tabbed picker ("Test Scenarios" / "Real COLA" tabs) in scrollable 180px panel
+- Fill Demo Data button now self-contained in LabelComparisonView -- loads demo-labels.json directly, matches by extracted class type as fallback when page state is lost
+- Fixed demoPrefill state persistence -- no longer cleared on re-selection, only on explicit reset
+
+Batch results:
+- Replaced flat text summary with structured 2-column grid per label showing each field extraction status
+- Government warning: "present on label" vs "NOT detected on label" (no more ambiguous "Warning: found")
+- Field count per label ("5/7 fields")
+
+Research:
+- Identified root cause of brand name OCR failure: Tesseract trained on dark-on-light, brand names are light-on-dark (bottle glass background)
+- Researched solutions: color inversion preprocessing (zero deps) + PaddleOCR ONNX fallback (@gutenye/ocr-node)
+- Created plan: `.cursor/plans/fix_brand_name_ocr_07eaae72.plan.md` for multi-pass OCR with inversion
+
+**Pending:** Brand name OCR fix (color inversion), Azure redeploy

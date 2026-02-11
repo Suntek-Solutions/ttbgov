@@ -241,56 +241,82 @@ export default function BatchPage() {
           </CardHeader>
           <CardContent>
             <div className="divide-y rounded-lg border">
-              {results.map((result, i) => (
-                <div
-                  key={i}
-                  className={`flex items-center justify-between px-4 py-3 ${
-                    result.extraction ? "" : "bg-red-50"
-                  }`}
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {result.filename}
-                    </p>
-                    {result.extraction ? (
-                      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-gray-500">
-                        {result.extraction.brandName.value && (
-                          <span>Brand: {result.extraction.brandName.value}</span>
-                        )}
-                        {result.extraction.classType.value && (
-                          <span>Type: {result.extraction.classType.value}</span>
-                        )}
-                        {result.extraction.alcoholContent.value && (
-                          <span>ABV: {result.extraction.alcoholContent.value}</span>
-                        )}
-                        {result.extraction.netContents.value && (
-                          <span>Vol: {result.extraction.netContents.value}</span>
-                        )}
-                        {result.extraction.governmentWarning.value ? (
-                          <span className="text-green-600">Warning: found</span>
+              {results.map((result, i) => {
+                if (!result.extraction) {
+                  return (
+                    <div key={i} className="flex items-center justify-between px-4 py-3 bg-red-50">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900 truncate">{result.filename}</p>
+                        <p className="mt-0.5 text-xs text-red-600">{result.error ?? "Extraction failed"}</p>
+                      </div>
+                      <div className="ml-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold">{"\u2717"}</div>
+                    </div>
+                  );
+                }
+
+                const ext = result.extraction;
+                const fieldsFound = [ext.brandName, ext.classType, ext.alcoholContent, ext.netContents, ext.governmentWarning, ext.producerInfo, ext.countryOfOrigin]
+                  .filter(f => f.value).length;
+
+                return (
+                  <div key={i} className="px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-gray-900 truncate">{result.filename}</p>
+                      <span className="ml-2 shrink-0 text-xs text-gray-400">{fieldsFound}/7 fields</span>
+                    </div>
+                    <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                      {/* Brand */}
+                      <div className="flex items-center gap-1.5">
+                        <span className={ext.brandName.value ? "text-green-600" : "text-gray-300"}>{ext.brandName.value ? "\u2713" : "\u2013"}</span>
+                        <span className="text-gray-500">Brand:</span>
+                        <span className={`truncate ${ext.brandName.value ? "text-gray-800" : "text-gray-400 italic"}`}>
+                          {ext.brandName.value ? ext.brandName.value.substring(0, 30) : "not detected"}
+                        </span>
+                      </div>
+                      {/* Type */}
+                      <div className="flex items-center gap-1.5">
+                        <span className={ext.classType.value ? "text-green-600" : "text-gray-300"}>{ext.classType.value ? "\u2713" : "\u2013"}</span>
+                        <span className="text-gray-500">Type:</span>
+                        <span className={`truncate ${ext.classType.value ? "text-gray-800" : "text-gray-400 italic"}`}>
+                          {ext.classType.value ?? "not detected"}
+                        </span>
+                      </div>
+                      {/* ABV */}
+                      <div className="flex items-center gap-1.5">
+                        <span className={ext.alcoholContent.value ? "text-green-600" : "text-gray-300"}>{ext.alcoholContent.value ? "\u2713" : "\u2013"}</span>
+                        <span className="text-gray-500">ABV:</span>
+                        <span className={`${ext.alcoholContent.value ? "text-gray-800" : "text-gray-400 italic"}`}>
+                          {ext.alcoholContent.value ?? "not detected"}
+                        </span>
+                      </div>
+                      {/* Volume */}
+                      <div className="flex items-center gap-1.5">
+                        <span className={ext.netContents.value ? "text-green-600" : "text-gray-300"}>{ext.netContents.value ? "\u2713" : "\u2013"}</span>
+                        <span className="text-gray-500">Vol:</span>
+                        <span className={`${ext.netContents.value ? "text-gray-800" : "text-gray-400 italic"}`}>
+                          {ext.netContents.value ?? "not detected"}
+                        </span>
+                      </div>
+                      {/* Warning -- full row */}
+                      <div className="col-span-2 flex items-center gap-1.5">
+                        {ext.governmentWarning.value ? (
+                          <>
+                            <span className="text-green-600">{"\u2713"}</span>
+                            <span className="text-gray-500">Gov. Warning:</span>
+                            <span className="text-gray-800">present on label</span>
+                          </>
                         ) : (
-                          <span className="text-red-600">Warning: not found</span>
+                          <>
+                            <span className="text-red-500 font-bold">{"\u2717"}</span>
+                            <span className="text-gray-500">Gov. Warning:</span>
+                            <span className="text-red-600 font-medium">NOT detected on label</span>
+                          </>
                         )}
                       </div>
-                    ) : (
-                      <p className="mt-0.5 text-xs text-red-600">
-                        {result.error ?? "Extraction failed"}
-                      </p>
-                    )}
+                    </div>
                   </div>
-                  <div className="ml-3 shrink-0">
-                    {result.extraction ? (
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-white text-xs font-bold">
-                        {"\u2713"}
-                      </div>
-                    ) : (
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold">
-                        {"\u2717"}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
