@@ -97,6 +97,7 @@ The TTB network blocks outbound traffic to many domains. A previous vendor's clo
 | What assumptions were made? | [docs/considerations/assumptions.md](docs/considerations/assumptions.md) -- 12 assumptions with confidence ratings |
 | Why this specific plan? | [docs/considerations/rationale.md](docs/considerations/rationale.md) -- full decision tree for every architectural choice |
 | What was the development process? | [docs/ACTIVITY_LOG.md](docs/ACTIVITY_LOG.md) -- timestamped session log of every step taken |
+| What are the TTB labeling requirements? | [docs/label-research-requirements.md](docs/label-research-requirements.md) -- research summary from ttb.gov covering all 3 beverage types |
 | How were test labels sourced? | [public/test-labels/README.md](public/test-labels/README.md) -- 5 AI-generated labels with expected results + 3 COLA registry datasets |
 
 ---
