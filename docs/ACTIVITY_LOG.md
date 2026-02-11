@@ -41,7 +41,7 @@ Project activity history for the TTB Label Verification App. Maintained througho
 
 ## Current Project State
 
-**Phase:** Commit-ready. UX improvements, demo mode, test framework, real labels all complete. Needs Azure redeploy.
+**Phase:** Full validation complete. All 59 labels tested. Ready for Azure redeploy and submission.
 **Live URL:** https://ttb-label-verification.delightfulbeach-49152395.eastus.azurecontainerapps.io (pending redeploy with latest changes)
 **Plan reference:** `.cursor/plans/ttb_label_verification_app_cf38bd97.plan.md`
 
@@ -319,3 +319,27 @@ Testing:
 - Added `scripts/test-ui-flow.ts` integration test (API-level flow testing: 4 label scenarios + batch + re-verify) -- ALL PASSED
 - Added transparency statement in APPROACH.md explaining AI-assisted development process
 - Added TTB label research doc (`docs/label-research-requirements.md`) from ttb.gov labeling resources
+
+### Session 12 -- `v1.3-full-validation`
+
+| | |
+|---|---|
+| **Date** | 2026-02-11 (Tuesday) |
+| **Time** | Continuation session |
+| **Phase** | Full validation of all demo labels |
+| **Commit** | `v1.3-full-validation` |
+
+**What was done:**
+- Built unified `demo-labels.json` catalog: 59 entries (5 generated + 54 real COLA) with complete applicationData per label
+- Generated from COLA metadata via `scripts/generate-demo-labels.ts` (reproducible)
+- Populated ABV values for all 54 real labels: 43 correct, 11 intentionally wrong for test variety
+- Beer/malt labels use 12 oz net contents, spirits/wine use 750 mL
+- Ran ALL 59 labels through extract API + verify API:
+  - Generated labels: 5/5 extract success, avg 5.6 fields found, all verification outcomes correct
+  - Real labels: 54/54 extract success, avg 2.7 fields found (COLA thumbnails, limited OCR)
+  - Zero extraction failures across entire dataset
+- Batch test: 5/5 generated extracted in 2521ms, 10/10 real sample extracted in 10019ms
+- Unit tests: 39/39 passed (4 test files)
+- Pipeline tests: 5/5 correct outcomes
+- Removed Monkey 47 and Lagunitas from earlier 8-label catalog (replaced with full 59)
+- Added `scripts/validate-all-labels.ts` for reproducible full-dataset validation
