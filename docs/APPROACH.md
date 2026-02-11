@@ -105,7 +105,7 @@ The spec encourages creating test labels and notes that AI image generation tool
 
 3. **Degraded images** -- Real or generated labels with simulated poor conditions: angled photo, low contrast, blur. These stress-test the image preprocessing pipeline and document the OCR's accuracy boundary.
 
-All test labels are in `public/test-labels/` organized by source (`real/`, `generated/`, `degraded/`) with a README documenting the expected result for each image.
+All test labels are in `public/test-labels/` organized by source (`real/`, `generated/`) with a unified `demo-labels.json` catalog containing application data and expected results for each label.
 
 ---
 

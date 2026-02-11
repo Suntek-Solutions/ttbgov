@@ -1,0 +1,164 @@
+[
+  {
+    "id": "compliant-bourbon",
+    "name": "Compliant Bourbon",
+    "description": "All fields correct -- should pass verification",
+    "category": "generated",
+    "file": "/test-labels/generated/compliant-label.png",
+    "expectedResult": "pass (except brand -- decorative font OCR limitation)",
+    "applicationData": {
+      "brandName": "OLD TOM DISTILLERY",
+      "classType": "Kentucky Straight Bourbon Whiskey",
+      "alcoholContent": "45%",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "producerInfo": "Distilled and Bottled by Old Tom Distillery, Louisville, KY",
+      "countryOfOrigin": "Product of USA"
+    }
+  },
+  {
+    "id": "wrong-abv",
+    "name": "Wrong ABV",
+    "description": "Label shows 40%, application says 45% -- ABV should fail",
+    "category": "generated",
+    "file": "/test-labels/generated/wrong-abv.png",
+    "expectedResult": "fail (ABV mismatch: 40% on label vs 45% in application)",
+    "applicationData": {
+      "brandName": "STONE'S THROW",
+      "classType": "Small Batch Bourbon Whiskey",
+      "alcoholContent": "45%",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "producerInfo": "Distilled by Stone's Throw Distillery, Portland, OR",
+      "countryOfOrigin": "Product of USA"
+    }
+  },
+  {
+    "id": "wrong-warning-case",
+    "name": "Title Case Warning",
+    "description": "\"Government Warning:\" not all caps -- warning should fail",
+    "category": "generated",
+    "file": "/test-labels/generated/wrong-warning-case.png",
+    "expectedResult": "fail (warning prefix not in all caps)",
+    "applicationData": {
+      "brandName": "COPPER RIDGE",
+      "classType": "Straight Rye Whiskey",
+      "alcoholContent": "50%",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+    }
+  },
+  {
+    "id": "brand-case-mismatch",
+    "name": "Brand Case Mismatch",
+    "description": "\"OLD TOM\" on label vs \"Old Tom\" in form -- fuzzy match test",
+    "category": "generated",
+    "file": "/test-labels/generated/brand-case-mismatch.png",
+    "expectedResult": "pass with fuzzy match (case-insensitive normalization)",
+    "applicationData": {
+      "brandName": "Old Tom",
+      "classType": "Cabernet Sauvignon",
+      "alcoholContent": "13.5%",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+    }
+  },
+  {
+    "id": "missing-warning",
+    "name": "Missing Warning",
+    "description": "No government warning on label -- warning should fail",
+    "category": "generated",
+    "file": "/test-labels/generated/missing-warning.png",
+    "expectedResult": "fail (government warning not found on label)",
+    "applicationData": {
+      "brandName": "HARBOR LIGHT",
+      "classType": "London Dry Gin",
+      "alcoholContent": "47%",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "producerInfo": "Distilled by Harbor Light Spirits, Seattle, WA",
+      "countryOfOrigin": "Product of USA"
+    }
+  },
+  {
+    "id": "woodford-reserve",
+    "name": "Woodford Reserve",
+    "description": "Real COLA label -- Straight Bourbon Whisky",
+    "category": "real",
+    "bevType": "distilled_spirits",
+    "file": "/test-labels/real/distilled_spirits/15061001000031_woodford-reserve_straight-bourbon-whisky.jpg",
+    "ttbId": "15061001000031",
+    "applicationData": {
+      "brandName": "WOODFORD RESERVE",
+      "classType": "Straight Bourbon Whisky",
+      "alcoholContent": "45.2%",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+    }
+  },
+  {
+    "id": "casamigos-tequila",
+    "name": "Casamigos Tequila",
+    "description": "Real COLA label -- Tequila",
+    "category": "real",
+    "bevType": "distilled_spirits",
+    "file": "/test-labels/real/distilled_spirits/14049001000115_casamigos_tequila-fb.jpg",
+    "ttbId": "14049001000115",
+    "applicationData": {
+      "brandName": "CASAMIGOS",
+      "classType": "Tequila",
+      "alcoholContent": "40%",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+    }
+  },
+  {
+    "id": "monkey-47-gin",
+    "name": "Monkey 47 Gin",
+    "description": "Real COLA label -- Distilled Gin",
+    "category": "real",
+    "bevType": "distilled_spirits",
+    "file": "/test-labels/real/distilled_spirits/13241001000512_monkey-47_other-distilled-gin-fb.jpg",
+    "ttbId": "13241001000512",
+    "applicationData": {
+      "brandName": "MONKEY 47",
+      "classType": "Distilled Gin",
+      "alcoholContent": "47%",
+      "netContents": "375 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+    }
+  },
+  {
+    "id": "corte-adagio-red",
+    "name": "Corte Adagio Red Wine",
+    "description": "Real COLA label -- Italian Table Red Wine",
+    "category": "real",
+    "bevType": "wine",
+    "file": "/test-labels/real/wine/18108001000943_corte-adagio_table-red-wine.jpg",
+    "ttbId": "18108001000943",
+    "applicationData": {
+      "brandName": "CORTE ADAGIO",
+      "classType": "Table Red Wine",
+      "alcoholContent": "13%",
+      "netContents": "750 mL",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+      "countryOfOrigin": "Product of Italy"
+    }
+  },
+  {
+    "id": "lagunitas-malt",
+    "name": "Lagunitas",
+    "description": "Real COLA label -- Malt Beverage",
+    "category": "real",
+    "bevType": "malt_beverage",
+    "file": "/test-labels/real/malt_beverage/18128001000774_the-lagunitas-brewing-company_malt-beverages-specialities-fl.jpg",
+    "ttbId": "18128001000774",
+    "applicationData": {
+      "brandName": "THE LAGUNITAS BREWING COMPANY",
+      "classType": "Malt Beverages Specialties",
+      "alcoholContent": "6.2%",
+      "netContents": "12 oz",
+      "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+    }
+  }
+]

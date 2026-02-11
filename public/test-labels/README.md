@@ -1,91 +1,58 @@
 # Test Labels
 
-Test labels for validating OCR extraction and field verification.
-
-This folder now includes a balanced public dataset from the TTB Public COLA Registry plus controlled generated labels for deterministic pass/fail checks.
+Test labels for validating the OCR extraction and verification pipeline.
 
 ---
 
-## Dataset Summary
+## demo-labels.json
 
-### `generated/` -- Controlled AI labels (5 images)
+The `demo-labels.json` file is the single source of truth for all demo/test labels in the system. Each entry contains:
 
-These are deterministic scenarios used to verify specific validation logic (ABV mismatch, warning format, missing warning, fuzzy brand matching).
+- `id` -- Unique identifier
+- `name` -- Display name in the UI
+- `description` -- What this label tests
+- `category` -- `"generated"` (AI-created test scenarios) or `"real"` (from TTB COLA registry)
+- `file` -- Path to the image file (relative to public/)
+- `applicationData` -- Pre-fill data for the application form (brand, class/type, ABV, contents, warning, producer, origin)
+- `expectedResult` -- What the verification should produce (for generated labels)
+- `ttbId` -- TTB COLA ID (for real labels)
 
-### `real/` -- Public COLA labels (54 images)
-
-Pulled from the free TTB Public COLA Registry and categorized by beverage type:
-
-- `real/distilled_spirits/` -- 18 labels
-- `real/wine/` -- 18 labels
-- `real/malt_beverage/` -- 18 labels
-
-Coverage target met: **all major beverage types represented** and **50+ total labels**.
-
-### `degraded/` -- Stress-test placeholders
-
-Reserved for manually degraded variants (blur, angle, contrast) to stress OCR preprocessing.
+The UI loads this file in demo mode to populate the example label picker on both the single-label and batch pages.
 
 ---
 
-## Sources Used
+## Sources
 
-- TTB Distilled Spirits labeling page:
-  - https://www.ttb.gov/regulated-commodities/beverage-alcohol/distilled-spirits/labeling
-- TTB Public COLA Registry basic search:
-  - https://www.ttbonline.gov/colasonline/publicSearchColasBasic.do
-- Label detail and printable views:
-  - `viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=<id>`
-  - `viewColaDetails.do?action=publicFormDisplay&ttbid=<id>`
-- Public image endpoint used on printable pages:
-  - `publicViewAttachment.do?filename=...&filetype=l`
+### `generated/` -- AI-Generated Test Scenarios (5 images)
 
-No authenticated endpoints were used.
+Labels created with AI image generation tools (as the spec encourages). Each is designed to trigger a specific pass or fail condition.
 
----
-
-## Real Label Metadata
-
-`real/metadata.json` contains one record per downloaded label with:
-
-- `ttbid`
-- `category`
-- `completed_date`
-- `brand_name`
-- `fanciful_name`
-- `class_type_code`
-- `class_type_desc`
-- `origin_code` / `origin_desc`
-- `details_url`
-- `printable_url`
-- `attachment_url`
-- `local_path`
-
-Use this file to quickly select representative test labels or map labels back to source pages.
-
----
-
-## Test Cases: Expected Results (Generated Set)
-
-| Image | Scenario | Expected Result |
+| Image | Test Scenario | Expected |
 |---|---|---|
-| `generated/compliant-label.png` | All fields match application data | All fields PASS |
-| `generated/wrong-abv.png` | Label says 40%, application says 45% | ABV FAIL, others PASS |
-| `generated/wrong-warning-case.png` | "Government Warning" in title case | Warning FAIL (prefix not all caps) |
-| `generated/brand-case-mismatch.png` | "OLD TOM" on label, "Old Tom" in form | Brand PASS via fuzzy normalization |
-| `generated/missing-warning.png` | Warning text omitted | Warning FAIL (missing) |
+| `compliant-label.png` | All fields match application data | Pass (except brand -- decorative font) |
+| `wrong-abv.png` | Label: 40%, Application: 45% | Fail on ABV |
+| `wrong-warning-case.png` | "Government Warning:" title case | Fail on warning prefix |
+| `brand-case-mismatch.png` | "OLD TOM" vs "Old Tom" | Pass with fuzzy match |
+| `missing-warning.png` | No warning on label | Fail on warning |
+
+### `real/` -- TTB Public COLA Registry Labels (54 images)
+
+Real approved labels downloaded from TTB's free public database. Organized by beverage type:
+
+- `real/distilled_spirits/` -- 18 labels (bourbon, tequila, gin, brandy, liqueurs)
+- `real/wine/` -- 18 labels (red, white, dessert wines from Italy)
+- `real/malt_beverage/` -- 18 labels (ales, stouts, lagers, specialty malt beverages)
+
+Source: https://www.ttbonline.gov/colasonline/publicSearchColasBasic.do
+
+Full metadata for all 54 labels is in `real/metadata.json` including TTB IDs, class/type, origin, and source URLs.
 
 ---
 
-## Rebuild / Refresh Dataset
+## Adding New Labels
 
-Run from repo root:
+To add a new label to the demo system:
 
-```bash
-python scripts/collect_public_labels.py --min-count 54 --from-date 01/01/2024 --to-date 02/10/2026 --max-pages 80
-```
-
-Notes:
-
-- The script balances download targets across `distilled_spirits`, `wine`, and `malt_beverage`.
-- If fewer than requested labels are returned, widen date range or increase `--max-pages`.
+1. Place the image file in `generated/` or `real/<category>/`
+2. Add an entry to `demo-labels.json` with the file path and application data
+3. The UI will automatically pick it up in demo mode

@@ -7,77 +7,15 @@ import type { ApplicationData } from "@/lib/types";
 import { STANDARD_WARNING_TEXT } from "@/lib/extraction/patterns";
 import { useDemo } from "@/lib/demo-context";
 
-/** Demo test data keyed by patterns found in OCR text */
-const DEMO_DATA: Record<string, ApplicationData> = {
-  "bourbon whiskey_45%": {
-    brandName: "OLD TOM DISTILLERY",
-    classType: "Kentucky Straight Bourbon Whiskey",
-    alcoholContent: "45%",
-    netContents: "750 mL",
-    governmentWarning: STANDARD_WARNING_TEXT,
-    producerInfo: "Distilled and Bottled by Old Tom Distillery, Louisville, KY",
-    countryOfOrigin: "Product of USA",
-  },
-  "bourbon whiskey_40%": {
-    brandName: "STONE'S THROW",
-    classType: "Small Batch Bourbon Whiskey",
-    alcoholContent: "45%", // intentional mismatch
-    netContents: "750 mL",
-    governmentWarning: STANDARD_WARNING_TEXT,
-    producerInfo: "Distilled by Stone's Throw Distillery, Portland, OR",
-    countryOfOrigin: "Product of USA",
-  },
-  "rye whiskey": {
-    brandName: "COPPER RIDGE",
-    classType: "Straight Rye Whiskey",
-    alcoholContent: "50%",
-    netContents: "750 mL",
-    governmentWarning: STANDARD_WARNING_TEXT,
-    producerInfo: "Distilled by Copper Ridge Distillery, Nashville, TN",
-    countryOfOrigin: "Product of USA",
-  },
-  "cabernet": {
-    brandName: "Old Tom",
-    classType: "Cabernet Sauvignon",
-    alcoholContent: "13.5%",
-    netContents: "750 mL",
-    governmentWarning: STANDARD_WARNING_TEXT,
-    producerInfo: "Vinted and Bottled by Summit Creek Vineyards, Napa, CA",
-  },
-  "london dry gin": {
-    brandName: "HARBOR LIGHT",
-    classType: "London Dry Gin",
-    alcoholContent: "47%",
-    netContents: "750 mL",
-    governmentWarning: STANDARD_WARNING_TEXT,
-    producerInfo: "Distilled by Harbor Light Spirits, Seattle, WA",
-    countryOfOrigin: "Product of USA",
-  },
-};
-
-function findDemoData(ocrClassType: string | undefined, ocrAbv: string | undefined): ApplicationData | null {
-  if (!ocrClassType) return null;
-  const ct = ocrClassType.toLowerCase();
-  const abv = ocrAbv ?? "";
-
-  if (ct.includes("cabernet")) return DEMO_DATA["cabernet"];
-  if (ct.includes("gin")) return DEMO_DATA["london dry gin"];
-  if (ct.includes("rye")) return DEMO_DATA["rye whiskey"];
-  if (ct.includes("bourbon") && abv.includes("40")) return DEMO_DATA["bourbon whiskey_40%"];
-  if (ct.includes("bourbon")) return DEMO_DATA["bourbon whiskey_45%"];
-  return null;
-}
-
 interface ApplicationFormProps {
   data: ApplicationData;
   onChange: (data: ApplicationData) => void;
   disabled?: boolean;
-  /** Pass extracted class/type and ABV so demo mode can auto-match test data */
-  extractedClassType?: string | null;
-  extractedAbv?: string | null;
+  /** Demo data to offer as one-click fill */
+  demoFillData?: ApplicationData | null;
 }
 
-export function ApplicationForm({ data, onChange, disabled, extractedClassType, extractedAbv }: ApplicationFormProps) {
+export function ApplicationForm({ data, onChange, disabled, demoFillData }: ApplicationFormProps) {
   const { demoMode } = useDemo();
 
   const update = (field: keyof ApplicationData, value: string) => {
@@ -85,16 +23,15 @@ export function ApplicationForm({ data, onChange, disabled, extractedClassType, 
   };
 
   const isEmpty = !data.brandName && !data.classType && !data.alcoholContent && !data.netContents;
-  const matchedDemoData = demoMode ? findDemoData(extractedClassType ?? undefined, extractedAbv ?? undefined) : null;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-gray-700">Application Data</h3>
-        {demoMode && matchedDemoData && (
+        {demoMode && demoFillData && (
           <button
             type="button"
-            onClick={() => onChange(matchedDemoData)}
+            onClick={() => onChange(demoFillData)}
             className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
               isEmpty
                 ? "bg-amber-200 text-amber-900 border border-amber-400 animate-pulse"

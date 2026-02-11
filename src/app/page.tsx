@@ -316,8 +316,7 @@ export default function Home() {
                 data={applicationData}
                 onChange={setApplicationData}
                 disabled={isVerifying}
-                extractedClassType={extractedFields?.classType.value}
-                extractedAbv={extractedFields?.alcoholContent.value}
+                demoFillData={demoMode ? demoPrefill : null}
               />
 
               {/* Label image reference -- click to enlarge */}
