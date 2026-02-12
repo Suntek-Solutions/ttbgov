@@ -255,4 +255,13 @@ Fixed confusing demo label selection behavior:
 
 Technical: LabelUploader now syncs with external preview state, ExampleLabelPicker tracks per-label loading state.
 
+**Scripts Directory Documentation & Cleanup:**
+Created comprehensive `scripts/README.md` documenting all 9 files:
+- **Production:** `deploy-azure.sh` (active), `generate-demo-labels.ts` (npm script)
+- **Development:** 5 historical validation scripts (kept for reference/methodology)
+- **Data Collection:** `collect_public_labels.py` (reproducibility)
+- **Cleanup:** Removed `validation-results.json` (50KB stale output from pre-ONNX version)
+
+All scripts now documented with purpose, status, usage, and recommendations. Added `.gitignore` rules for script output files.
+
 ---
