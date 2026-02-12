@@ -21,6 +21,7 @@ import {
   ABV_PATTERN,
   ABV_PATTERN_ALT,
   NET_CONTENTS_PATTERN,
+  NET_CONTENTS_PATTERN_ALT,
   GOV_WARNING_PATTERN,
   PRODUCER_PATTERN,
   ORIGIN_PATTERN,
@@ -79,6 +80,11 @@ function extractNetContents(text: string): FieldResult {
   const match = text.match(NET_CONTENTS_PATTERN);
   if (match) {
     return field(`${match[1]} ${match[2]}`, 0.95);
+  }
+  // Fallback: catches OCR-truncated "750m" (missing "L" in "mL")
+  const altMatch = text.match(NET_CONTENTS_PATTERN_ALT);
+  if (altMatch) {
+    return field(`${altMatch[1]} mL`, 0.8); // Assume mL for 3-4 digit values
   }
   return field(null, 0);
 }

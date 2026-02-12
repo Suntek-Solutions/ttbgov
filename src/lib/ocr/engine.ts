@@ -193,9 +193,11 @@ export async function recognizeWithFallback(
     `brand: "${fields.brandName.value ?? "null"}" (${fields.brandName.confidence})`
   );
 
-  // If we got most fields on the first pass, skip fallbacks (saves ~1-2s)
-  if (pass1Count >= 5) {
-    console.log(`[OCR Multi-Pass] Pass 1 sufficient (${pass1Count}/7). Done in ${Math.round(performance.now() - start)}ms`);
+  // Only skip fallbacks if ALL 7 fields were found on the first pass.
+  // Even if pass 1 found 5-6 fields, pass 2 may recover the missing ones
+  // (e.g., "750m" truncated in normal pass becomes "750 ml" in threshold pass).
+  if (pass1Count >= 7) {
+    console.log(`[OCR Multi-Pass] Pass 1 perfect (7/7). Done in ${Math.round(performance.now() - start)}ms`);
     return { fields, ocrResult };
   }
 
@@ -229,19 +231,20 @@ export async function recognizeWithFallback(
     console.error("[OCR Multi-Pass] Pass 2 failed:", error);
   }
 
-  // Smart threshold: skip Pass 3 if we already have 5+ fields,
-  // OR if Pass 2 gained nothing over Pass 1 (label is likely well-lit, not dark-bg)
+  // Smart threshold for Pass 3 (expensive inversion):
+  // - Skip if we already have 7/7 fields
+  // - Skip if Pass 2 gained nothing AND we have 5+ fields (label is readable, just limited visible fields)
+  // - Run if we have < 5 fields or if Pass 2 found new fields (suggests different preprocessing helps)
   const afterPass2 = countFields(fields);
-  if (afterPass2 >= 5) {
-    console.log(`[OCR Multi-Pass] Sufficient after Pass 2 (${afterPass2}/7 fields). Done in ${Math.round(performance.now() - start)}ms`);
+  if (afterPass2 >= 7) {
+    console.log(`[OCR Multi-Pass] Perfect after Pass 2 (7/7 fields). Done in ${Math.round(performance.now() - start)}ms`);
     return { fields, ocrResult };
   }
 
-  if (pass2Gained <= 0 && pass1Count >= 3) {
-    // Pass 2 (threshold) didn't help AND we already have some fields -- this
-    // is likely a label with readable text that just has limited fields visible.
-    // Skip the expensive inversion pass.
-    console.log(`[OCR Multi-Pass] Pass 2 gained nothing, pass 1 had ${pass1Count} fields. Skipping inversion. Done in ${Math.round(performance.now() - start)}ms`);
+  if (pass2Gained <= 0 && afterPass2 >= 5) {
+    // Pass 2 didn't help and we already have most fields -- the missing ones
+    // are likely not on this label at all. Skip the expensive inversion pass.
+    console.log(`[OCR Multi-Pass] Pass 2 gained nothing, have ${afterPass2}/7 fields. Skipping inversion. Done in ${Math.round(performance.now() - start)}ms`);
     return { fields, ocrResult };
   }
 

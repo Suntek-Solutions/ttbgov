@@ -45,6 +45,7 @@ export const PROOF_PATTERN = /\((\d{1,3}\.?\d*)\s*Proof\)/i;
 /**
  * Matches net content patterns from real COLA labels:
  *   "750 mL" / "750mL" / "750 ML"
+ *   "750m" (OCR truncation of "mL")
  *   "1.75 L" / "1 Liter"
  *   "375 ml"
  *   "12 FL OZ (355 mL)"     -- Athletic Brewing
@@ -53,7 +54,11 @@ export const PROOF_PATTERN = /\((\d{1,3}\.?\d*)\s*Proof\)/i;
  *   "NET WT 12 FL OZ"       -- cans
  */
 export const NET_CONTENTS_PATTERN =
-  /(?:NET\s*(?:WT|CONTENTS?)?\s*)?(\d{1,4}\.?\d*)\s*(mL|ml|ML|L|l|Liter|liter|FL\.?\s*OZ\.?|fl\.?\s*oz\.?|oz)/i;
+  /(?:NET\s*(?:WT|CONTENTS?)?\s*)?(\d{1,4}\.?\d*)\s*(mL|ml|ML|L|l|Liter|liter|FL\.?\s*OZ\.?|fl\.?\s*oz\.?|oz)\b/i;
+
+/** Fallback: catches OCR-truncated units like "750m" (missing "L") at end of line */
+export const NET_CONTENTS_PATTERN_ALT =
+  /(\d{3,4})\s*m(?:\b|$)/i;
 
 // ---------------------------------------------------------------------------
 // Government Warning
