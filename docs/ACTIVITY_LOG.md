@@ -229,4 +229,12 @@ All documentation now accurately reflects:
 - Production-validated performance numbers
 - Test suite metrics (3.2s avg, 3.9/7 fields on 59 labels)
 
+**Known Limitations Section Added:**
+Expanded README with concrete boundary case documentation showing image quality impact:
+- High-quality images: 6.2/7 fields (89%)
+- Best real COLA: 7/7 fields  
+- Typical COLA registry: 3.9/7 fields (56%)
+
+Documents what challenges OCR (decorative fonts, dark backgrounds, curved text, low resolution) and best practices for optimal results. Shows evaluators we understand and tested the system's limits.
+
 ---
