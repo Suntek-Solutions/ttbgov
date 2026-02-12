@@ -19,6 +19,7 @@
 import type { ExtractedFields, FieldResult } from "@/lib/types";
 import {
   ABV_PATTERN,
+  ABV_PATTERN_ALT,
   NET_CONTENTS_PATTERN,
   GOV_WARNING_PATTERN,
   PRODUCER_PATTERN,
@@ -51,14 +52,21 @@ function field(value: string | null, confidence: number): FieldResult {
 // ---------------------------------------------------------------------------
 
 function extractAbv(text: string): FieldResult {
-  const match = text.match(ABV_PATTERN);
+  // Try the primary pattern first
+  let match = text.match(ABV_PATTERN);
+
+  // Fall back to alternate pattern ("ALC X% BY VOL")
+  if (!match) {
+    match = text.match(ABV_PATTERN_ALT);
+  }
+
   if (match) {
     // Reconstruct a clean ABV string from the match context
     const fullMatch = match[0].trim();
     // Look for proof in nearby text
     const matchIndex = text.indexOf(match[0]);
     const nearbyText = text.substring(matchIndex, matchIndex + 60);
-    const proofMatch = nearbyText.match(/\(\d{1,3}\s*Proof\)/i);
+    const proofMatch = nearbyText.match(/\(\d{1,3}\.?\d*\s*Proof\)/i);
     const abvString = proofMatch
       ? `${fullMatch} ${proofMatch[0]}`
       : fullMatch;
@@ -154,8 +162,9 @@ function extractClassType(text: string): FieldResult {
 
 function extractBrandName(text: string, classType: string | null): FieldResult {
   // The brand name is typically the first prominent text on the label.
-  // NOTE: Decorative/stylized brand fonts are often unreadable by Tesseract OCR.
-  // This is a known limitation (Risk #1). Confidence is set lower to reflect this.
+  // Brand detection uses positional heuristics: text appearing before the class/type
+  // line is likely the brand. Multi-pass OCR (PSM 3 + threshold + inversion) handles
+  // most decorative fonts. Confidence is set lower for heuristic-based extraction.
   const lines = text
     .split("\n")
     .map((l) => l.trim())

@@ -37,10 +37,11 @@ export default function AboutPage() {
             <CardTitle className="text-base">AI Extracts Text</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-gray-600">
-            The AI preprocesses the image (grayscale, contrast enhancement,
-            sharpening) and runs OCR to extract all text from the label. Seven
-            standard fields are identified automatically and displayed with
-            confidence scores so you can see what the AI found.
+            The AI runs a multi-pass OCR pipeline: normal preprocessing for
+            standard labels, high-contrast thresholding for decorative fonts,
+            and color inversion for dark-background labels. Seven standard
+            fields are identified automatically and displayed with confidence
+            scores so you can see what the AI found.
           </CardContent>
         </Card>
 
@@ -88,8 +89,9 @@ export default function AboutPage() {
               <div>
                 <p className="text-sm font-medium text-gray-900">Class / Type Designation</p>
                 <p className="text-sm text-gray-600">
-                  Matched against 40+ known designations (bourbon, rye, gin,
-                  cabernet sauvignon, IPA, etc.) with fuzzy text comparison.
+                  Matched against 60+ known designations (bourbon, rye, gin,
+                  tequila, cabernet sauvignon, merlot, IPA, ale, stout, etc.)
+                  with fuzzy text comparison.
                 </p>
               </div>
             </div>
@@ -168,11 +170,14 @@ export default function AboutPage() {
             processing is local, which means this tool works behind any firewall.
           </p>
           <p>
-            <strong>Image Preprocessing:</strong> Before OCR, every image goes
-            through a pipeline: resize to consistent resolution, grayscale
-            conversion, contrast normalization, and gentle sharpening. This
-            improves accuracy on photos that are slightly blurry, low-contrast,
-            or poorly lit.
+            <strong>Multi-Pass Image Preprocessing:</strong> Each label runs through
+            up to three OCR strategies, selected automatically based on what
+            the first pass finds. Pass 1 uses standard preprocessing (resize,
+            grayscale, normalize, sharpen). If fields are missing, Pass 2 uses
+            binary thresholding to recover large decorative text. Pass 3 uses
+            color inversion at higher resolution for light-on-dark labels. Only
+            the passes needed are run, keeping processing under the 5-second
+            target.
           </p>
           <p>
             <strong>Fuzzy Matching:</strong> Text fields like brand name and
@@ -211,11 +216,12 @@ export default function AboutPage() {
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-gray-600">
           <p>
-            <strong>Decorative Fonts:</strong> Brand names printed in highly
-            stylized or decorative fonts may not be readable by the OCR engine.
-            When this happens, the tool shows &quot;not found&quot; for the
-            brand name field rather than guessing incorrectly. The agent can
-            verify the brand name visually.
+            <strong>Complex Label Designs:</strong> The multi-pass OCR handles
+            most label styles including decorative fonts and dark backgrounds.
+            However, text embedded in graphical logos, rotated/vertical text,
+            and heavily illustrated labels (e.g. ornate spirit bottles) may
+            produce partial or inaccurate extractions. The agent can always
+            verify these fields visually using the side-by-side comparison view.
           </p>
           <p>
             <strong>Image Quality:</strong> Best results come from flat,

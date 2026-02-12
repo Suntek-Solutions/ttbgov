@@ -5,7 +5,7 @@
     "description": "All fields correct -- should pass verification",
     "category": "generated",
     "file": "/test-labels/generated/compliant-label.png",
-    "expectedResult": "Most fields pass. Brand name not extractable (decorative font OCR limitation).",
+    "expectedResult": "All 7 fields detected and verified. Brand name 'OLD TOM DISTILLERY' extracted via multi-pass OCR with explicit PSM initialization. Full pass expected.",
     "applicationData": {
       "brandName": "OLD TOM DISTILLERY",
       "classType": "Kentucky Straight Bourbon Whiskey",
@@ -22,7 +22,7 @@
     "description": "Label shows 40%, application says 45% -- ABV should fail",
     "category": "generated",
     "file": "/test-labels/generated/wrong-abv.png",
-    "expectedResult": "ABV fails (40% on label vs 45% in form). Demonstrates numeric mismatch detection.",
+    "expectedResult": "ABV fails (40% on label vs 45% in form). Brand 'STONE'S THR' partially extracted. Demonstrates numeric mismatch detection.",
     "applicationData": {
       "brandName": "STONE'S THROW",
       "classType": "Small Batch Bourbon Whiskey",
@@ -54,7 +54,7 @@
     "description": "\"OLD TOM\" on label vs \"Old Tom\" in form -- fuzzy match test",
     "category": "generated",
     "file": "/test-labels/generated/brand-case-mismatch.png",
-    "expectedResult": "Class/type and ABV pass. Brand OCR unreliable on bottle background.",
+    "expectedResult": "Brand 'OLD TOM' extracted and fuzzy-matched to 'Old Tom'. Class/type and ABV pass. Demonstrates case-insensitive matching.",
     "applicationData": {
       "brandName": "Old Tom",
       "classType": "Cabernet Sauvignon",
@@ -69,7 +69,7 @@
     "description": "No government warning on label -- warning should fail",
     "category": "generated",
     "file": "/test-labels/generated/missing-warning.png",
-    "expectedResult": "Warning fails (not found on label). All other fields pass. Cleanest demo.",
+    "expectedResult": "Warning correctly flagged as not found on label. All other 6 fields pass. Cleanest demo of a compliance failure.",
     "applicationData": {
       "brandName": "HARBOR LIGHT",
       "classType": "London Dry Gin",
@@ -202,15 +202,16 @@
   {
     "id": "real-filadoro-0219",
     "name": "Filadoro",
-    "description": "Real COLA -- Wine -- Table Red Wine",
+    "description": "★ Featured Real COLA -- Italian red wine (Taurasi DOCG). Best real-label result: 7/7 fields detected including brand, class, ABV, net contents, warning, producer, and origin.",
     "category": "real",
+    "featured": true,
     "bevType": "wine",
     "file": "/test-labels/real/wine/18309001000219_filadoro_table-red-wine.jpg",
     "ttbId": "18309001000219",
     "applicationData": {
       "brandName": "FILADORO",
       "classType": "Table Red Wine",
-      "alcoholContent": "13.5%",
+      "alcoholContent": "14%",
       "netContents": "750 mL",
       "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
       "countryOfOrigin": "Product of Italy"
@@ -440,18 +441,20 @@
   {
     "id": "real-lafayette-spice-flavored-whiskey-0052",
     "name": "Lafayette Spice Flavored Whiskey",
-    "description": "Real COLA -- Spirits -- Other Whisky (flavored)",
+    "description": "★ Featured Real COLA -- American spiced whiskey. 6/7 fields detected: class, ABV, net contents, producer, origin. Government warning is printed vertically (OCR limitation).",
     "category": "real",
+    "featured": true,
     "bevType": "distilled_spirits",
     "file": "/test-labels/real/distilled_spirits/17010001000052_lafayette-spice-flavored-whiskey_other-whisky-flavored.jpg",
     "ttbId": "17010001000052",
     "applicationData": {
-      "brandName": "LAFAYETTE SPICE FLAVORED WHISKEY",
-      "classType": "Other Whisky (flavored)",
-      "alcoholContent": "45%",
+      "brandName": "ALPINE LAFAYETTE",
+      "classType": "Spiced Flavored Whiskey",
+      "alcoholContent": "40%",
       "netContents": "750 mL",
       "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
-      "countryOfOrigin": "Product of Utah"
+      "producerInfo": "Produced and Bottled by Alpine Distilling, Park City, UT",
+      "countryOfOrigin": "Product of USA"
     }
   },
   {
@@ -474,15 +477,16 @@
   {
     "id": "real-sortilege-0537",
     "name": "Sortilege - Maple Cream",
-    "description": "Real COLA -- Spirits -- Other Liqueur (cremes or Creams)",
+    "description": "★ Featured Real COLA -- Canadian maple cream liqueur. Clean readable label. ABV and net contents detected with high confidence.",
     "category": "real",
+    "featured": true,
     "bevType": "distilled_spirits",
     "file": "/test-labels/real/distilled_spirits/14351001000537_sortilege_other-liqueur-cremes-or-creams.jpg",
     "ttbId": "14351001000537",
     "applicationData": {
       "brandName": "SORTILEGE",
-      "classType": "Other Liqueur (cremes or Creams)",
-      "alcoholContent": "35%",
+      "classType": "Maple Cream Liqueur",
+      "alcoholContent": "17%",
       "netContents": "750 mL",
       "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
       "countryOfOrigin": "Product of Canada"
@@ -593,15 +597,16 @@
   {
     "id": "real-casamigos-0115",
     "name": "Casamigos - Anejo",
-    "description": "Real COLA -- Spirits -- Tequila (ABV intentionally wrong)",
+    "description": "★ Featured Real COLA -- Tequila Anejo (dark background label). Tests color inversion OCR. Brand, class, ABV, and net contents detected.",
     "category": "real",
+    "featured": true,
     "bevType": "distilled_spirits",
     "file": "/test-labels/real/distilled_spirits/14049001000115_casamigos_tequila-fb.jpg",
     "ttbId": "14049001000115",
     "applicationData": {
       "brandName": "CASAMIGOS",
       "classType": "Tequila",
-      "alcoholContent": "43%",
+      "alcoholContent": "40%",
       "netContents": "750 mL",
       "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
       "countryOfOrigin": "Product of Mexico"

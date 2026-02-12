@@ -13,7 +13,7 @@
 import { createWorker, createScheduler, type Worker, type Scheduler } from "tesseract.js";
 import { join } from "path";
 import type { OcrResult, ExtractedFields } from "@/lib/types";
-import { preprocessImageHighContrast } from "@/lib/ocr/preprocessor";
+import { preprocessImageHighContrast, preprocessImageInverted } from "@/lib/ocr/preprocessor";
 import { extractFields } from "@/lib/extraction/fieldExtractor";
 
 // ---------------------------------------------------------------------------
@@ -129,23 +129,53 @@ export async function recognizeImage(imageBuffer: Buffer): Promise<OcrResult> {
 }
 
 /**
- * Multi-pass OCR: run normal OCR, then if brand name is missing, run a
- * high-contrast (binary threshold) pass and merge the brand from that pass.
+ * Count how many non-null fields with confidence > 0.2 an extraction has.
+ * Used to pick the best result across multiple OCR passes.
+ */
+function countFields(f: ExtractedFields): number {
+  const fields = [f.brandName, f.classType, f.alcoholContent, f.netContents,
+    f.governmentWarning, f.producerInfo, f.countryOfOrigin];
+  return fields.filter(r => r.value && r.confidence > 0.2).length;
+}
+
+/**
+ * Merge the best field values from a secondary extraction into the primary.
+ * Only overwrites fields that are null/missing in the primary.
+ */
+function mergeFields(primary: ExtractedFields, secondary: ExtractedFields): void {
+  const keys: (keyof Omit<ExtractedFields, "rawText">)[] = [
+    "brandName", "classType", "alcoholContent", "netContents",
+    "governmentWarning", "producerInfo", "countryOfOrigin",
+  ];
+  for (const key of keys) {
+    const pField = primary[key];
+    const sField = secondary[key];
+    if ((!pField.value || pField.confidence < 0.2) && sField.value && sField.confidence > 0.2) {
+      primary[key] = sField;
+    }
+  }
+}
+
+/**
+ * Multi-pass OCR with three strategies:
  *
- * This addresses Tesseract's issue with large decorative brand-name text.
- * The normal pipeline (resize + normalize) can destroy oversized serif fonts.
- * The high-contrast pass uses binary thresholding which preserves them.
+ * Pass 1 (always): Normal preprocessing (resize + grayscale + normalize + sharpen)
+ *   - Best for standard labels with dark text on light backgrounds
  *
- * Combined with explicit PSM 3 initialization on workers, this resolves
- * brand detection for labels like "OLD TOM DISTILLERY" that were previously
- * invisible to Tesseract.
+ * Pass 2 (if fields missing): High-contrast threshold (resize + grayscale + threshold)
+ *   - Recovers large decorative text destroyed by normalize()
+ *   - e.g. "OLD TOM DISTILLERY" in oversized serif fonts
  *
- * Cost: ~500ms extra only when brand is missing (one additional OCR pass).
- * Zero new dependencies.
+ * Pass 3 (if fields still missing): Color inversion (resize + negate + grayscale + normalize)
+ *   - For light-text-on-dark-background labels (Corte Adagio, Casamigos)
+ *   - Converts light-on-dark to dark-on-light for Tesseract
+ *
+ * Results are merged: each pass fills in missing fields from previous passes.
+ * Cost: ~500ms per additional pass. Only runs when fields are missing.
  *
  * @param preprocessedBuffer - Already preprocessed (normal) image buffer
- * @param rawImageBuffer - Original raw image buffer (needed for inverted preprocessing)
- * @returns ExtractedFields with brand name filled from inverted pass if needed
+ * @param rawImageBuffer - Original raw image buffer (for alternate preprocessing)
+ * @returns ExtractedFields with best results merged across all passes
  */
 export async function recognizeWithFallback(
   preprocessedBuffer: Buffer,
@@ -156,50 +186,96 @@ export async function recognizeWithFallback(
   // ---- Pass 1: Normal OCR ----
   const ocrResult = await recognizeImage(preprocessedBuffer);
   const fields = extractFields(ocrResult.text, ocrResult.confidence);
+  const pass1Count = countFields(fields);
 
-  // Check if brand name was found
-  if (fields.brandName.value && fields.brandName.confidence > 0.3) {
-    console.log(
-      `[OCR Multi-Pass] Brand found on first pass: "${fields.brandName.value}" (conf: ${fields.brandName.confidence})`
-    );
+  console.log(
+    `[OCR Multi-Pass] Pass 1 (normal): ${pass1Count}/7 fields, ` +
+    `brand: "${fields.brandName.value ?? "null"}" (${fields.brandName.confidence})`
+  );
+
+  // If we got most fields on the first pass, skip fallbacks (saves ~1-2s)
+  if (pass1Count >= 5) {
+    console.log(`[OCR Multi-Pass] Pass 1 sufficient (${pass1Count}/7). Done in ${Math.round(performance.now() - start)}ms`);
     return { fields, ocrResult };
   }
 
-  // ---- Pass 2: High-contrast OCR (brand name recovery) ----
-  console.log("[OCR Multi-Pass] Brand not found on first pass. Running high-contrast pass...");
-  const invertedStart = performance.now();
-
+  // ---- Pass 2: High-contrast threshold ----
+  let pass2Gained = 0;
   try {
-    const invertedBuffer = await preprocessImageHighContrast(rawImageBuffer);
-    const invertedOcr = await recognizeImage(invertedBuffer);
-    const invertedFields = extractFields(invertedOcr.text, invertedOcr.confidence);
+    console.log("[OCR Multi-Pass] Running Pass 2 (high-contrast threshold)...");
+    const hcBuffer = await preprocessImageHighContrast(rawImageBuffer);
+    const hcOcr = await recognizeImage(hcBuffer);
+    const hcFields = extractFields(hcOcr.text, hcOcr.confidence);
+    const pass2Count = countFields(hcFields);
+    pass2Gained = pass2Count - pass1Count;
 
-    const hcElapsed = Math.round(performance.now() - invertedStart);
     console.log(
-      `[OCR Multi-Pass] High-contrast pass complete in ${hcElapsed}ms. ` +
-      `Brand: "${invertedFields.brandName.value}" (conf: ${invertedFields.brandName.confidence})`
+      `[OCR Multi-Pass] Pass 2 result: ${pass2Count}/7 fields (+${pass2Gained}), ` +
+      `brand: "${hcFields.brandName.value ?? "null"}" (${hcFields.brandName.confidence})`
     );
 
-    // Merge: take brand name from inverted pass if it found one
-    if (invertedFields.brandName.value && invertedFields.brandName.confidence > 0.2) {
-      fields.brandName = invertedFields.brandName;
-      // Also grab class/type from inverted pass if the normal pass missed it
-      if (!fields.classType.value && invertedFields.classType.value) {
-        fields.classType = invertedFields.classType;
+    // If pass 2 found MORE total fields, use it as the primary and merge pass 1 into it
+    if (pass2Count > pass1Count) {
+      mergeFields(hcFields, fields);
+      hcFields.rawText = ocrResult.text + "\n\n--- HIGH-CONTRAST PASS (primary) ---\n\n" + hcOcr.text;
+      Object.assign(fields, hcFields);
+    } else {
+      mergeFields(fields, hcFields);
+      if (hcOcr.text !== ocrResult.text) {
+        fields.rawText = ocrResult.text + "\n\n--- HIGH-CONTRAST PASS ---\n\n" + hcOcr.text;
       }
-      // Append high-contrast raw text for debugging (separated by marker)
-      fields.rawText =
-        ocrResult.text +
-        "\n\n--- HIGH-CONTRAST PASS ---\n\n" +
-        invertedOcr.text;
     }
   } catch (error) {
-    // High-contrast pass is best-effort; don't fail the whole extraction
-    console.error("[OCR Multi-Pass] High-contrast pass failed:", error);
+    console.error("[OCR Multi-Pass] Pass 2 failed:", error);
+  }
+
+  // Smart threshold: skip Pass 3 if we already have 5+ fields,
+  // OR if Pass 2 gained nothing over Pass 1 (label is likely well-lit, not dark-bg)
+  const afterPass2 = countFields(fields);
+  if (afterPass2 >= 5) {
+    console.log(`[OCR Multi-Pass] Sufficient after Pass 2 (${afterPass2}/7 fields). Done in ${Math.round(performance.now() - start)}ms`);
+    return { fields, ocrResult };
+  }
+
+  if (pass2Gained <= 0 && pass1Count >= 3) {
+    // Pass 2 (threshold) didn't help AND we already have some fields -- this
+    // is likely a label with readable text that just has limited fields visible.
+    // Skip the expensive inversion pass.
+    console.log(`[OCR Multi-Pass] Pass 2 gained nothing, pass 1 had ${pass1Count} fields. Skipping inversion. Done in ${Math.round(performance.now() - start)}ms`);
+    return { fields, ocrResult };
+  }
+
+  // ---- Pass 3: Color inversion (for light-on-dark labels) ----
+  // Uses a higher target resolution (2000px) for the inverted pass to preserve
+  // thin/delicate fonts that get destroyed at 1200px after inversion.
+  try {
+    console.log("[OCR Multi-Pass] Running Pass 3 (color inversion for dark backgrounds)...");
+    const invBuffer = await preprocessImageInverted(rawImageBuffer);
+    const invOcr = await recognizeImage(invBuffer);
+    const invFields = extractFields(invOcr.text, invOcr.confidence);
+    const pass3Count = countFields(invFields);
+
+    console.log(
+      `[OCR Multi-Pass] Pass 3 result: ${pass3Count}/7 fields, ` +
+      `brand: "${invFields.brandName.value ?? "null"}" (${invFields.brandName.confidence})`
+    );
+
+    // If inversion found MORE total fields, use it as primary
+    const currentCount = countFields(fields);
+    if (pass3Count > currentCount) {
+      mergeFields(invFields, fields);
+      invFields.rawText = (fields.rawText || ocrResult.text) + "\n\n--- INVERTED PASS (primary) ---\n\n" + invOcr.text;
+      Object.assign(fields, invFields);
+    } else {
+      mergeFields(fields, invFields);
+      fields.rawText = (fields.rawText || ocrResult.text) + "\n\n--- INVERTED PASS ---\n\n" + invOcr.text;
+    }
+  } catch (error) {
+    console.error("[OCR Multi-Pass] Pass 3 failed:", error);
   }
 
   const totalElapsed = Math.round(performance.now() - start);
-  console.log(`[OCR Multi-Pass] Total multi-pass time: ${totalElapsed}ms`);
+  console.log(`[OCR Multi-Pass] Final: ${countFields(fields)}/7 fields in ${totalElapsed}ms`);
 
   return { fields, ocrResult };
 }

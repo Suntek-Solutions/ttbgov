@@ -90,8 +90,16 @@ Every feature and architectural decision traces directly to something a stakehol
 **Source:** Jenny Park -- "Labels that are photographed at weird angles, or the lighting is bad, or there's glare on the bottle."
 
 **What we did:**
-- Preprocessing pipeline before OCR: grayscale conversion, contrast enhancement, sharpening, noise reduction, resize
+- **Multi-pass OCR pipeline** -- three preprocessing strategies, each targeting a different class of label:
+  1. **Normal pass** (always): resize 1200px + grayscale + normalize + sharpen -- standard dark-text-on-light labels
+  2. **High-contrast pass** (if fields missing): binary thresholding instead of normalize -- recovers large decorative text
+  3. **Color-inverted pass** (for dark backgrounds): negate at 2000px + grayscale + normalize -- converts light-on-dark labels to readable text
+- **Explicit Tesseract PSM initialization** -- discovered that `setParameters({ tessedit_pageseg_mode: "3" })` must be called explicitly for reliable large-font detection
+- **Smart fallback logic** -- each pass only runs when the previous pass left fields undetected, with early exit to stay under the 5-second SLA
+- **Expanded extraction patterns** -- regex patterns tested against real COLA labels (not just generated ones): "ALC X% BY VOL", "IMPORTED BY:", "FL.OZ", "PRODUCT OF" across line breaks
 - Graceful error messaging when OCR confidence is too low to produce reliable results
+
+**Results:** 7/7 fields detected on our best real COLA label (Filadoro Italian red wine). Generated labels now achieve near-perfect extraction including brand names previously flagged as unreadable.
 
 ---
 
@@ -140,7 +148,7 @@ Key assumptions made during development (full list in `docs/considerations/assum
 
 | Decision | Trade-off | Why we accepted it |
 |---|---|---|
-| Tesseract.js over cloud AI | Lower accuracy on complex labels | No cloud dependency, works behind firewalls, meets the constraint Marcus described |
+| Tesseract.js over cloud AI | Lower accuracy on complex labels (mitigated by multi-pass OCR) | No cloud dependency, works behind firewalls, meets the constraint Marcus described |
 | Fuzzy matching over exact matching for text fields | Could allow false positives on genuinely different names | Dave's example showed exact matching produces false negatives that are worse for workflow |
 | No database or persistent storage | Results are not saved between sessions | Marcus said "don't do anything crazy" -- prototype scope, no data retention needed |
 | No PDF label support | Some real labels may arrive as PDFs | Spec shows image-based labels; PDF adds complexity for an edge case |

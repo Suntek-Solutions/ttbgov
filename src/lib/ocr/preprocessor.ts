@@ -165,6 +165,75 @@ export async function preprocessImageHighContrast(imageBuffer: Buffer): Promise<
 }
 
 /**
+ * Color-inverted preprocessing for light-text-on-dark-background labels.
+ *
+ * Real COLA labels like Corte Adagio (light red text on dark gray) and
+ * Casamigos (white text on black) need color inversion for Tesseract to
+ * read them, since Tesseract is trained on dark-on-light text.
+ *
+ * Uses negate() to flip colors before the standard grayscale pipeline.
+ * Uses a HIGHER target resolution (2000px vs 1200px) because inverted
+ * labels often have thin/delicate fonts that need more pixels to survive
+ * the negate → grayscale → normalize pipeline.
+ *
+ * @param imageBuffer - Raw image data (JPEG, PNG, WebP, etc.)
+ * @returns Color-inverted preprocessed image buffer
+ */
+export async function preprocessImageInverted(imageBuffer: Buffer): Promise<Buffer> {
+  const start = performance.now();
+
+  if (!imageBuffer || imageBuffer.length === 0) {
+    throw new Error("Empty image buffer provided to inverted preprocessor");
+  }
+
+  let metadata;
+  try {
+    metadata = await sharp(imageBuffer).metadata();
+  } catch (error) {
+    throw new Error(
+      `Failed to read image: ${error instanceof Error ? error.message : "Unsupported or corrupt image format"}`
+    );
+  }
+
+  const inputWidth = metadata.width ?? 0;
+
+  // Higher resolution for inverted pass -- thin fonts on dark backgrounds
+  // need more pixels to remain legible after color inversion + normalize
+  const INVERTED_TARGET = 2000;
+
+  let pipeline = sharp(imageBuffer);
+
+  // Step 1: Resize to higher target (preserves thin/delicate text)
+  if (inputWidth > INVERTED_TARGET * 1.5 || inputWidth < MIN_WIDTH) {
+    pipeline = pipeline.resize(INVERTED_TARGET, null, {
+      fit: "inside",
+      withoutEnlargement: inputWidth >= MIN_WIDTH,
+    });
+  }
+
+  // Step 2: Negate (invert colors -- light-on-dark becomes dark-on-light)
+  pipeline = pipeline.negate({ alpha: false });
+
+  // Step 3: Grayscale
+  pipeline = pipeline.greyscale();
+
+  // Step 4: Normalize (safe after inversion since text is now dark-on-light)
+  pipeline = pipeline.normalize();
+
+  // Step 5: Gentle sharpen
+  pipeline = pipeline.sharpen({ sigma: 1 });
+
+  const result = await pipeline.png().toBuffer();
+
+  const elapsed = Math.round(performance.now() - start);
+  console.log(
+    `[Preprocessor:Inverted] ${inputWidth}px → ${INVERTED_TARGET}px, negate + grayscale + normalize + sharpen in ${elapsed}ms`
+  );
+
+  return result;
+}
+
+/**
  * Get basic metadata about an image without full preprocessing.
  * Useful for validation before processing.
  */

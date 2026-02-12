@@ -9,7 +9,7 @@ todos:
     content: "Build the OCR engine: Tesseract.js worker pool manager (src/lib/ocr/engine.ts) + image preprocessing pipeline with sharp (grayscale, normalize, sharpen) in src/lib/ocr/preprocessor.ts. Validated: 85.6% avg confidence, <1s processing."
     status: completed
   - id: field-extraction
-    content: "Build field extraction logic: regex patterns + heuristic parsing in src/lib/extraction/. Validated: 5/5 pipeline tests pass. Known limitation: decorative brand name fonts unreadable by OCR."
+    content: "Build field extraction logic: regex patterns + heuristic parsing in src/lib/extraction/. Validated: 5/5 pipeline tests pass. Brand name OCR limitation resolved with multi-pass engine (Session 7)."
     status: completed
   - id: verification-logic
     content: "Build verification engine: fuzzy matching, numeric normalization (ABV/volume), government warning validator (exact text + all caps check). All comparison strategies validated."
@@ -182,7 +182,7 @@ ttbgov/
 ├── tailwind.config.ts
 ├── tsconfig.json
 ├── package.json
-├── Dockerfile                         # For container deployment (Azure, Railway, etc.)
+├── Dockerfile                         # For container deployment (Azure Container Apps, or any Docker host)
 └── README.md                          # Comprehensive project documentation
 ```
 
@@ -294,7 +294,7 @@ Each test label will have a corresponding expected result documented in `public/
 - **Dockerfile**: Multi-stage build for minimal image size (platform-agnostic)
 - **Deploy script**: `scripts/deploy-azure.sh` (config-driven, all values overridable via env vars)
 - **URL**: Will be a `*.azurecontainerapps.io` URL shared with evaluators
-- **Alternative**: Dockerfile works on any Docker host (Railway, Render, AWS, etc.)
+- **Alternative**: Dockerfile works on any Docker host (Render, AWS, GCP, etc.)
 
 ---
 

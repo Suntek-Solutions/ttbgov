@@ -136,7 +136,7 @@ ttbgov/
 
 | Decision | Trade-off | Why we accepted it |
 |---|---|---|
-| Tesseract.js over cloud AI | Lower accuracy on decorative fonts | No cloud dependency, works behind firewalls, meets the constraint Marcus described |
+| Tesseract.js over cloud AI | Lower accuracy on complex layouts (mitigated by multi-pass OCR) | No cloud dependency, works behind firewalls, meets the constraint Marcus described |
 | Fuzzy matching for text fields | Could allow false positives on genuinely different names | Dave's example showed exact matching produces false negatives that are worse for workflow |
 | No persistent storage | Results not saved between sessions | Marcus said "don't do anything crazy" -- prototype scope, no data retention needed |
 | No COLA integration | Agent enters data manually | Standalone prototype per spec -- COLA integration is a production concern |

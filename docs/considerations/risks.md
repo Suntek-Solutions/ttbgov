@@ -12,12 +12,23 @@ This document captures every area of the plan where there is risk, uncertainty, 
 
 **What we planned:** Image preprocessing with sharp (grayscale, contrast boost, sharpening, resize) to maximize Tesseract accuracy before OCR runs.
 
-**Where we might need to pivot:**
-- If preprocessing + Tesseract cannot achieve acceptable accuracy on realistic label images during the OCR engine build step, we may need to switch to **PaddleOCR** (more capable on complex layouts, but requires a Python sidecar or subprocess).
-- As a last resort, we could add an **optional cloud API mode** that is off by default but can be enabled with an API key. This keeps the local-first principle while giving evaluators a way to see higher accuracy. The trade-off is added complexity.
-- We should test early with the actual test labels we create. Do not wait until the UI is built to discover the OCR is insufficient.
+**Status: SIGNIFICANTLY MITIGATED.** Through iterative testing and diagnostic work, we developed a multi-pass OCR strategy that dramatically improved accuracy:
 
-**Severity: HIGH. This is the first thing to validate.**
+1. **PSM initialization fix** -- Discovered that Tesseract.js workers skip large decorative text unless `tessedit_pageseg_mode` is explicitly set (even to the default value "3"). This single fix recovered brand names like "OLD TOM DISTILLERY" that were previously invisible.
+2. **Three-pass preprocessing pipeline:**
+   - Pass 1: Normal (resize 1200px + grayscale + normalize + sharpen) -- best for standard dark-on-light text
+   - Pass 2: High-contrast threshold (binary threshold instead of normalize) -- recovers oversized decorative fonts that normalize() destroys
+   - Pass 3: Color inversion at 2000px (negate + grayscale + normalize) -- for light-on-dark labels like Casamigos, Corte Adagio
+3. **Smart fallback logic** -- Only runs additional passes when needed, with early exit when sufficient fields are found
+4. **Field extraction regex expansion** -- Added patterns for real COLA formats ("ALC X% BY VOL", "IMPORTED BY:", "FL.OZ", etc.)
+
+**Test results on 12 diverse labels (5 generated + 7 real COLA):**
+- Generated labels: 7/7 fields on the compliant label, all brands now detected
+- Best real COLA: Filadoro wine at 7/7 fields (brand, class, ABV, net, warning, producer, origin)
+- Real COLA average: ~4/7 fields detected per label
+- Remaining gaps: graphical logos, rotated/vertical text, and highly decorative fonts
+
+**Severity: MEDIUM (mitigated from HIGH). Working well on clean labels, graceful degradation on complex ones.**
 
 ---
 
@@ -166,7 +177,7 @@ This document captures every area of the plan where there is risk, uncertainty, 
 
 | # | Concern | Severity | When we will know |
 |---|---|---|---|
-| 1 | Tesseract OCR accuracy | HIGH | During OCR engine build (step 2) |
+| 1 | Tesseract OCR accuracy | MEDIUM (mitigated) | Multi-pass OCR with 3 strategies validated |
 | 2 | Performance on Azure | LOW (validated locally) | After deployment |
 | 3 | Field extraction reliability | MEDIUM-HIGH | During extraction build (step 3) |
 | 4 | Government warning detection | MEDIUM | During verification build (step 4) |

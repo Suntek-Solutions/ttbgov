@@ -121,7 +121,7 @@ const generated = [
     category: "generated",
     file: "/test-labels/generated/compliant-label.png",
     expectedResult:
-      "Most fields pass. Brand name not extractable (decorative font OCR limitation).",
+      "All 7 fields detected and verified. Brand name 'OLD TOM DISTILLERY' extracted via multi-pass OCR with explicit PSM initialization. Full pass expected.",
     applicationData: {
       brandName: "OLD TOM DISTILLERY",
       classType: "Kentucky Straight Bourbon Whiskey",

@@ -41,8 +41,8 @@ Project activity history for the TTB Label Verification App. Maintained througho
 
 ## Current Project State
 
-**Phase:** UI polish and UX overhaul complete. Pending: Azure redeploy, OCR inversion fix for brand names.
-**Live URL:** https://ttb-label-verification.delightfulbeach-49152395.eastus.azurecontainerapps.io (pending redeploy with latest changes)
+**Phase:** Multi-pass OCR engine complete. All core features implemented and tested. Pending: Azure redeploy with OCR improvements (v8).
+**Live URL:** https://ttb-label-verification.delightfulbeach-49152395.eastus.azurecontainerapps.io (v7 deployed; v8 with OCR improvements pending)
 **Plan reference:** `.cursor/plans/ttb_label_verification_app_cf38bd97.plan.md`
 
 ---
@@ -122,7 +122,7 @@ Project activity history for the TTB Label Verification App. Maintained througho
 - Built `src/lib/verification/warningValidator.ts`: 4-check validation (present, prefix all caps, sentence 1 present, sentence 2 present, body text similarity)
 - Built `src/lib/verification/comparator.ts`: dispatches each field to appropriate comparison strategy (fuzzy/numeric/exact) and produces per-field pass/fail results
 - Built `scripts/test-pipeline.ts`: full end-to-end pipeline test (image → preprocess → OCR → extraction → verification)
-- **Critical finding:** Decorative brand name fonts ("OLD TOM DISTILLERY", "STONE'S THROW", "COPPER RIDGE") are unreadable by Tesseract OCR. This is a documented Risk #1 limitation. The brand name appears in stylized serif fonts that Tesseract cannot decode. All other fields extract correctly.
+- **Critical finding (at this stage):** Decorative brand name fonts were unreadable by Tesseract OCR with the initial single-pass pipeline. *(Later resolved in Session 7 with multi-pass OCR: explicit PSM 3 initialization + high-contrast threshold + color inversion. All brands now detected across 59 test labels.)*
 - **ABV fix:** OCR artifact "135%" (missing decimal) handled by normalizer: values >100% auto-corrected to "13.5%"
 - **5/5 pipeline tests pass.** Risk #3 (field extraction) and Risk #4 (warning detection) VALIDATED.
 
@@ -135,7 +135,7 @@ Project activity history for the TTB Label Verification App. Maintained througho
 | brand-case-mismatch.png | fail (brand + OCR quality) | fail | ABV "135%"→"13.5%" fix works. Bottle background degrades warning OCR. |
 | missing-warning.png | fail (no warning) | fail | All fields PASS except warning correctly flagged missing |
 
-**Known limitation documented:** Brand names in decorative/stylized fonts are the weakest point. In the real app UI, the agent sees the raw OCR text and can manually verify brand names. The tool flags "could not extract" rather than false-passing.
+**Known limitation documented:** Brand names in decorative/stylized fonts were the weakest point at this stage. *(Later resolved in Session 7 with multi-pass OCR: PSM initialization fix + high-contrast threshold + color inversion. Brand detection improved to 100% across all 59 test labels.)*
 
 **Next session:** Step 6 (API routes) and step 7 (UI) -- wire up endpoints and build the single-label verification interface.
 
@@ -378,4 +378,48 @@ Research:
 - Researched solutions: color inversion preprocessing (zero deps) + PaddleOCR ONNX fallback (@gutenye/ocr-node)
 - Created plan: `.cursor/plans/fix_brand_name_ocr_07eaae72.plan.md` for multi-pass OCR with inversion
 
-**Pending:** Brand name OCR fix (color inversion), Azure redeploy
+**Completed next session:** Brand name OCR fix (multi-pass engine, Session 7 below).
+
+---
+
+### Session 7: Multi-Pass OCR Engine + Real COLA Validation
+
+**Time:** Feb 11, 2026 ~4:50 PM – ~6:30 PM MST (1h40m)
+**Who:** Scott + AI agent
+
+**What was done:**
+
+Multi-pass OCR engine (the core fix):
+- Discovered Tesseract.js PSM initialization bug: workers skip large decorative text unless `setParameters({ tessedit_pageseg_mode: "3" })` is called explicitly. This single fix recovered "OLD TOM DISTILLERY" on the first pass.
+- Fixed `cleanOcrText()` newline destruction: `^\s+|\s+$/gm` regex was consuming `\n` characters. Changed to `^[^\S\n]+|[^\S\n]+$/gm` to only trim horizontal whitespace per line.
+- Built 3-pass preprocessing pipeline in `engine.ts`:
+  - Pass 1: Normal (resize 1200px + normalize) for standard dark-on-light labels
+  - Pass 2: High-contrast binary threshold -- recovers oversized decorative fonts
+  - Pass 3: Color inversion at 2000px -- for light-on-dark labels (Casamigos, Corte Adagio)
+- Smart fallback logic: skips Pass 3 if Pass 2 gained nothing and Pass 1 already found 3+ fields
+- Added `countFields()` and `mergeFields()` helpers to pick the best result across passes
+
+Real COLA pattern expansion:
+- ABV: Added "ALC X% BY VOL", "X% ALC/VOL", "ALC. / VOL." patterns (Barrilito, Casamigos, South Bank, Woodford formats)
+- Producer: Added "IMPORTED BY:" and "Crafted" patterns (Barrilito, Filadoro)
+- Net contents: Added "FL.OZ", "FL OZ", "NET WT" patterns
+- Class/type: Expanded from ~40 to 60+ keywords (Ale, Beer, Cerveza, Near Beer, Dry Gin, Anejo, Reposado, Blanco, Sangiovese, Tempranillo, etc.)
+- Origin: Improved to handle "PRODUCT OF" across line breaks
+
+Comprehensive testing:
+- Full 59-label API sweep (5 generated + 54 real COLA): all under 5s, avg 1.7s
+- Generated labels: 6.4/7 avg fields, 100% brand detection
+- Real COLA: 3.2/7 avg fields, 100% brand, 80% class/type, 37% ABV
+- Best real performers: Filadoro wine (7/7), Pietro Rinaldi (6/7), Lafayette whiskey (6/7), Azienda Agricola (5-6/7)
+- Browser UI verified: Filadoro and Pietro Rinaldi tested end-to-end with screenshots
+
+Demo data & documentation updates:
+- Updated `demo-labels.json` expectedResults for all 5 generated labels (reflected brand name fix)
+- Added `featured: true` flag + hand-verified applicationData for 4 real COLA labels (Filadoro, Lafayette, Sortilege, Casamigos)
+- Updated `risks.md`: Risk #1 downgraded from HIGH to MEDIUM (mitigated) with full multi-pass strategy description
+- Updated `APPROACH.md`: "Image Preprocessing" section rewritten with 3-pass strategy, PSM fix, expanded patterns, and test results
+- Updated `about/page.tsx`: "AI Extracts Text", "Technical Details", and "Known Limitations" reflect multi-pass OCR
+
+**Files changed (9):** `engine.ts`, `preprocessor.ts`, `fieldExtractor.ts`, `patterns.ts`, `demo-labels.json`, `risks.md`, `APPROACH.md`, `about/page.tsx`, `ACTIVITY_LOG.md`
+
+**Pending:** Azure redeploy with OCR improvements (v8)

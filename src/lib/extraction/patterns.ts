@@ -5,7 +5,8 @@
  * as extracted by Tesseract.js OCR. They account for minor OCR artifacts
  * like extra spaces, pipe characters, and line breaks.
  *
- * Tested against OCR output from all 5 generated test labels.
+ * Tested against both AI-generated test labels AND real COLA label scans
+ * from the TTB registry (spirits, beer, wine categories).
  */
 
 // ---------------------------------------------------------------------------
@@ -13,35 +14,46 @@
 // ---------------------------------------------------------------------------
 
 /**
- * Matches ABV patterns like:
- *   "45% Alc./Vol. (90 Proof)"
- *   "40% Alc./Vol. (80 Proof)"
- *   "13.5% Alc./Vol."
- *   "135% Alc. Vol." (OCR artifact -- missing decimal)
- *   "47% Alc./Vol. (94 Proof)"
+ * Matches ABV patterns across real COLA labels:
+ *   "45% Alc./Vol. (90 Proof)"        -- standard US format
+ *   "40% ALC. / VOL. (80 PROOF)"      -- Casamigos tequila
+ *   "ALC 3.6% BY VOL"                 -- Barrilito beer
+ *   "47% ALC./VOL."                   -- Monkey 47 gin
+ *   "45.2% ALC/VOL (90.4 PROOF)"      -- Woodford Reserve
+ *   "14% Alc. BY Vol."                -- Filadoro wine
+ *   "13.5% Alc./Vol."                 -- standard wine
+ *   "135% Alc. Vol." (OCR artifact)   -- missing decimal
+ *   "CONTAINS LESS THAN 0.5% ALC"     -- near-beer
+ *   "ALC 40% BY VOL (80 PROOF)"       -- South Bank gin
  */
 export const ABV_PATTERN =
-  /(\d{1,3}\.?\d*)\s*%\s*Alc[\s./]*Vol[\s.]*/i;
+  /(?:ALC\.?\s*)?(\d{1,3}\.?\d*)\s*%\s*(?:Alc[\s./]*Vol|ALC[\s./]*VOL|ALC\b|BY\s*VOL)/i;
+
+/** Alternate pattern: "ALC X% BY VOL" format (percentage after ALC) */
+export const ABV_PATTERN_ALT =
+  /ALC\.?\s+(\d{1,3}\.?\d*)\s*%\s*(?:BY\s*VOL|ALC[\s./]*VOL)/i;
 
 /**
- * Matches proof notation: "(90 Proof)", "(80 Proof)", etc.
+ * Matches proof notation: "(90 Proof)", "(80 Proof)", "(90.4 PROOF)", etc.
  */
-export const PROOF_PATTERN = /\((\d{1,3})\s*Proof\)/i;
+export const PROOF_PATTERN = /\((\d{1,3}\.?\d*)\s*Proof\)/i;
 
 // ---------------------------------------------------------------------------
 // Net Contents
 // ---------------------------------------------------------------------------
 
 /**
- * Matches net content patterns like:
- *   "750 mL"
- *   "750mL"
- *   "1.75 L"
- *   "1 Liter"
+ * Matches net content patterns from real COLA labels:
+ *   "750 mL" / "750mL" / "750 ML"
+ *   "1.75 L" / "1 Liter"
  *   "375 ml"
+ *   "12 FL OZ (355 mL)"     -- Athletic Brewing
+ *   "8FL.OZ."               -- Barrilito
+ *   "1 QT., 8FL.OZ."        -- Barrilito (1 quart 8 fl oz)
+ *   "NET WT 12 FL OZ"       -- cans
  */
 export const NET_CONTENTS_PATTERN =
-  /(\d{1,4}\.?\d*)\s*(mL|ml|L|l|Liter|liter|oz|fl\.?\s*oz)/i;
+  /(?:NET\s*(?:WT|CONTENTS?)?\s*)?(\d{1,4}\.?\d*)\s*(mL|ml|ML|L|l|Liter|liter|FL\.?\s*OZ\.?|fl\.?\s*oz\.?|oz)/i;
 
 // ---------------------------------------------------------------------------
 // Government Warning
@@ -69,30 +81,35 @@ export const STANDARD_WARNING_TEXT =
 // ---------------------------------------------------------------------------
 
 /**
- * Matches producer/bottler lines like:
+ * Matches producer/bottler/importer lines from real COLA labels:
  *   "Distilled and Bottled by Old Tom Distillery, Louisville, KY"
  *   "Distilled by Stone's Throw Distillery, Portland, OR"
  *   "Vinted and Bottled by Summit Creek Vineyards, Napa, CA"
  *   "Produced and Bottled by..."
  *   "Brewed by..."
- *   "Imported by..."
+ *   "IMPORTED BY: RR IMPORTACIONES INC."   -- Barrilito
+ *   "Imported by BUTA DISTRIBUTORS INC"    -- Filadoro
+ *   "produced and bottled by FILADORO..."  -- Filadoro wine
+ *   "Brewed in Stratford, CT..."           -- Athletic Brewing
  */
 export const PRODUCER_PATTERN =
-  /((?:Distilled|Vinted|Produced|Brewed|Blended|Imported|Bottled|Made)(?:\s+and\s+(?:Bottled|Distilled|Produced))?\s+by\s+.+?)(?:\n|$)/i;
+  /((?:Distilled|Vinted|Produced|Brewed|Blended|Imported|Bottled|Made|Crafted)(?:\s+and\s+(?:Bottled|Distilled|Produced|Blended))?\s+by\s*:?\s*.+?)(?:\n|$)/i;
 
 // ---------------------------------------------------------------------------
 // Country of Origin
 // ---------------------------------------------------------------------------
 
 /**
- * Matches origin lines like:
+ * Matches origin lines from real COLA labels:
  *   "Product of USA"
  *   "Product of France"
- *   "Imported from Scotland"
+ *   "PRODUCT OF MEXICO"        -- Barrilito
+ *   "PRODUCT OF ITALY"         -- Filadoro
  *   "Product of the USA"
+ *   "Hecho Jalisco, Mexico"    -- (partial, not matched by this pattern)
  */
 export const ORIGIN_PATTERN =
-  /Product\s+of\s+(?:the\s+)?([A-Za-z\s]+?)(?:\s*[|\n]|$)/i;
+  /Product\s+of\s+(?:the\s+)?([A-Za-z\s]+?)(?:\s*[|\n.,]|$)/i;
 
 // ---------------------------------------------------------------------------
 // Class/Type Designation
@@ -101,6 +118,7 @@ export const ORIGIN_PATTERN =
 /**
  * Common class/type designations for alcohol beverages.
  * Used for keyword matching in OCR text.
+ * Expanded with real COLA designations found in the TTB registry.
  */
 export const CLASS_TYPE_KEYWORDS = [
   // Whiskey/Bourbon
@@ -118,6 +136,7 @@ export const CLASS_TYPE_KEYWORDS = [
   "Single Malt Scotch Whisky",
   "Canadian Whisky",
   "Irish Whiskey",
+  "Flavored Whiskey",
   // Wine
   "Cabernet Sauvignon",
   "Chardonnay",
@@ -129,23 +148,34 @@ export const CLASS_TYPE_KEYWORDS = [
   "Zinfandel",
   "Syrah",
   "Malbec",
+  "Sangiovese",
+  "Tempranillo",
   "Red Wine",
   "White Wine",
   "Rosé",
   "Sparkling Wine",
   "Champagne",
-  // Beer
+  "Table Wine",
+  "Dessert Wine",
+  // Beer / Malt
   "India Pale Ale",
   "IPA",
   "Pale Ale",
+  "Ale",
   "Lager",
   "Pilsner",
   "Stout",
   "Porter",
   "Wheat Beer",
   "Amber Ale",
+  "Beer",
+  "Cerveza",
+  "Near Beer",
+  "Malt Beverage",
   // Spirits
+  "Schwarzwald Dry Gin",
   "London Dry Gin",
+  "Dry Gin",
   "Gin",
   "Vodka",
   "Rum",
@@ -153,4 +183,9 @@ export const CLASS_TYPE_KEYWORDS = [
   "Mezcal",
   "Brandy",
   "Cognac",
+  "Liqueur",
+  "Cordial",
+  "Anejo",
+  "Reposado",
+  "Blanco",
 ];

@@ -28,7 +28,7 @@ const DIR = join(process.cwd(), "public", "test-labels", "generated");
 const TEST_CASES = [
   {
     file: "compliant-label.png",
-    description: "All fields match EXCEPT brand (decorative font unreadable by OCR) -- known Risk #1 limitation",
+    description: "All fields match -- brand 'OLD TOM DISTILLERY' now detected via multi-pass OCR",
     application: {
       brandName: "OLD TOM DISTILLERY",
       classType: "Kentucky Straight Bourbon Whiskey",
@@ -38,7 +38,7 @@ const TEST_CASES = [
       producerInfo: "Distilled and Bottled by Old Tom Distillery, Louisville, KY",
       countryOfOrigin: "Product of USA",
     } as ApplicationData,
-    expectedOverall: "fail", // Brand name unreadable in decorative font -- OCR limitation
+    expectedOverall: "pass", // Brand now detected with multi-pass OCR (PSM 3 + threshold)
   },
   {
     file: "wrong-abv.png",
@@ -72,7 +72,7 @@ const TEST_CASES = [
   },
   {
     file: "brand-case-mismatch.png",
-    description: "Brand 'OLD TOM' unreadable (decorative font), wine label with bottle background degrades OCR",
+    description: "Brand 'OLD TOM' extracted via multi-pass OCR, wine label with bottle background",
     application: {
       brandName: "Old Tom",
       classType: "Cabernet Sauvignon",
@@ -81,7 +81,7 @@ const TEST_CASES = [
       governmentWarning: STANDARD_WARNING_TEXT,
       producerInfo: "Vinted and Bottled by Summit Creek Vineyards, Napa, CA",
     } as ApplicationData,
-    expectedOverall: "fail", // Brand unreadable + bottle background degrades warning OCR -- known limitation
+    expectedOverall: "fail", // Bottle background degrades warning OCR
   },
   {
     file: "missing-warning.png",

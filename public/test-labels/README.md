@@ -29,7 +29,7 @@ Labels created with AI image generation tools (as the spec encourages). Each is 
 
 | Image | Test Scenario | Expected |
 |---|---|---|
-| `compliant-label.png` | All fields match application data | Pass (except brand -- decorative font) |
+| `compliant-label.png` | All fields match application data | Pass -- all 7 fields including brand |
 | `wrong-abv.png` | Label: 40%, Application: 45% | Fail on ABV |
 | `wrong-warning-case.png` | "Government Warning:" title case | Fail on warning prefix |
 | `brand-case-mismatch.png` | "OLD TOM" vs "Old Tom" | Pass with fuzzy match |

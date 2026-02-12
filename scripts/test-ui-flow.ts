@@ -37,7 +37,7 @@ const TEST_CASES: TestCase[] = [
       producerInfo: "Distilled and Bottled by Old Tom Distillery, Louisville, KY",
       countryOfOrigin: "Product of USA",
     },
-    expectedOverall: "fail", // brand not extractable
+    expectedOverall: "pass", // brand now detected via multi-pass OCR
     expectedWarningMatch: true,
     expectedAbvMatch: true,
   },
