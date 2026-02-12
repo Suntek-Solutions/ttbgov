@@ -58,3 +58,8 @@ Desktop.ini
 
 # Tesseract.js language data (downloaded at runtime)
 *.traineddata
+
+# Script output files (keep scripts, ignore generated output)
+scripts/validation-results.json
+scripts/*.json.bak
+scripts/*.log
