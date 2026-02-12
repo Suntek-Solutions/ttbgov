@@ -4,7 +4,7 @@ overview: "Fix the brand name OCR blind spot for decorative fonts on dark backgr
 todos:
   - id: invert-preprocess
     content: Add preprocessImageInverted() to preprocessor.ts using sharp.negate() before grayscale
-    status: pending
+    status: completed
   - id: multipass-ocr
     content: "Add multi-pass OCR: normal pass first, inverted pass if brand missing, merge results"
     status: pending

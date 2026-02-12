@@ -14,8 +14,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { preprocessImage } from "@/lib/ocr/preprocessor";
-import { recognizeImage } from "@/lib/ocr/engine";
-import { extractFields } from "@/lib/extraction/fieldExtractor";
+import { recognizeWithFallback } from "@/lib/ocr/engine";
 import type { BatchResponse, ExtractedFields } from "@/lib/types";
 
 /** Max files per batch request */
@@ -47,8 +46,7 @@ async function processImage(
     const arrayBuffer = await file.arrayBuffer();
     const imageBuffer = Buffer.from(arrayBuffer);
     const preprocessed = await preprocessImage(imageBuffer);
-    const ocrResult = await recognizeImage(preprocessed);
-    const fields = extractFields(ocrResult.text, ocrResult.confidence);
+    const { fields } = await recognizeWithFallback(preprocessed, imageBuffer);
 
     return { filename: file.name, extraction: fields };
   } catch (error) {

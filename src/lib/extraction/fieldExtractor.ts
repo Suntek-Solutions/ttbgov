@@ -35,8 +35,8 @@ function cleanOcrText(text: string): string {
   return text
     .replace(/[|]/g, "") // Remove pipe characters (OCR artifact)
     .replace(/[{}[\]]/g, "") // Remove brackets (OCR artifact)
-    .replace(/\s{2,}/g, " ") // Collapse multiple spaces
-    .replace(/^\s+|\s+$/gm, "") // Trim each line
+    .replace(/[^\S\n]{2,}/g, " ") // Collapse multiple spaces/tabs (preserve newlines!)
+    .replace(/^[^\S\n]+|[^\S\n]+$/gm, "") // Trim horizontal whitespace per line (preserve newlines!)
     .replace(/\n{3,}/g, "\n\n") // Collapse excessive blank lines
     .trim();
 }

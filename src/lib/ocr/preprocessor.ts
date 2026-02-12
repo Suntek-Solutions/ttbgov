@@ -95,6 +95,76 @@ export async function preprocessImage(imageBuffer: Buffer): Promise<Buffer> {
 }
 
 /**
+ * Alternate preprocessing for brand-name recovery (high-contrast pass).
+ *
+ * The normal pipeline (resize 1200px + normalize) destroys large decorative
+ * text that spans the label width. This happens because normalize() adjusts
+ * brightness levels in a way that erases the contrast of oversized serif fonts.
+ *
+ * Diagnostic testing confirmed:
+ *   - Normal pipeline (1200px + normalize):  "OLD TOM DISTILLERY" → NOT FOUND
+ *   - Binary threshold (1200px + threshold): "OLD TOM DISTILLERY" → FOUND
+ *   - Higher resolution (2000px + normalize): "OLD TOM DISTILLERY" → FOUND
+ *   - Raw image (no preprocessing):           "OLD TOM DISTILLERY" → FOUND
+ *
+ * This function uses BINARY THRESHOLDING instead of normalize(). The threshold
+ * creates a clean black-and-white image that preserves large decorative text
+ * shapes that normalize() was destroying.
+ *
+ * @param imageBuffer - Raw image data (JPEG, PNG, WebP, etc.)
+ * @returns High-contrast preprocessed image buffer (PNG, grayscale, thresholded)
+ */
+export async function preprocessImageHighContrast(imageBuffer: Buffer): Promise<Buffer> {
+  const start = performance.now();
+
+  if (!imageBuffer || imageBuffer.length === 0) {
+    throw new Error("Empty image buffer provided to high-contrast preprocessor");
+  }
+
+  let metadata;
+  try {
+    metadata = await sharp(imageBuffer).metadata();
+  } catch (error) {
+    throw new Error(
+      `Failed to read image: ${error instanceof Error ? error.message : "Unsupported or corrupt image format"}`
+    );
+  }
+
+  const inputWidth = metadata.width ?? 0;
+
+  let pipeline = sharp(imageBuffer);
+
+  // Step 1: Resize (same target as normal pass)
+  if (inputWidth > TARGET_WIDTH * 1.5 || inputWidth < MIN_WIDTH) {
+    pipeline = pipeline.resize(TARGET_WIDTH, null, {
+      fit: "inside",
+      withoutEnlargement: inputWidth >= MIN_WIDTH,
+    });
+  }
+
+  // Step 2: Convert to grayscale
+  pipeline = pipeline.greyscale();
+
+  // Step 3: Binary threshold (THE KEY DIFFERENCE)
+  // Creates a pure black-and-white image, preserving large decorative text
+  // that normalize() was destroying
+  pipeline = pipeline.threshold(128);
+
+  // Step 4: Gentle sharpen
+  pipeline = pipeline.sharpen({ sigma: 1 });
+
+  // Output as PNG (lossless, best for OCR)
+  const result = await pipeline.png().toBuffer();
+
+  const elapsed = Math.round(performance.now() - start);
+  console.log(
+    `[Preprocessor:HighContrast] ${inputWidth}px → ${TARGET_WIDTH}px, grayscale + threshold + sharpen in ${elapsed}ms`
+  );
+
+  return result;
+}
+
+/**
  * Get basic metadata about an image without full preprocessing.
  * Useful for validation before processing.
  */

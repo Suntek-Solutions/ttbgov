@@ -12,7 +12,9 @@
 
 import { createWorker, createScheduler, type Worker, type Scheduler } from "tesseract.js";
 import { join } from "path";
-import type { OcrResult } from "@/lib/types";
+import type { OcrResult, ExtractedFields } from "@/lib/types";
+import { preprocessImageHighContrast } from "@/lib/ocr/preprocessor";
+import { extractFields } from "@/lib/extraction/fieldExtractor";
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -63,7 +65,15 @@ async function ensureInitialized(): Promise<Scheduler> {
           )
         );
 
+        // CRITICAL: Explicitly set PSM 3 (fully automatic page segmentation).
+        // Without this explicit call, Tesseract.js skips large decorative text
+        // (e.g., "OLD TOM DISTILLERY" in serif fonts). The setParameters call
+        // triggers internal page analysis initialization that the default doesn't.
+        // Discovered via diagnostic testing: default fails, explicit PSM 3 succeeds.
         for (const worker of workers) {
+          await worker.setParameters({
+            tessedit_pageseg_mode: "3" as unknown as string,
+          });
           newScheduler.addWorker(worker);
         }
 
@@ -116,6 +126,82 @@ export async function recognizeImage(imageBuffer: Buffer): Promise<OcrResult> {
     confidence,
     processingTimeMs,
   };
+}
+
+/**
+ * Multi-pass OCR: run normal OCR, then if brand name is missing, run a
+ * high-contrast (binary threshold) pass and merge the brand from that pass.
+ *
+ * This addresses Tesseract's issue with large decorative brand-name text.
+ * The normal pipeline (resize + normalize) can destroy oversized serif fonts.
+ * The high-contrast pass uses binary thresholding which preserves them.
+ *
+ * Combined with explicit PSM 3 initialization on workers, this resolves
+ * brand detection for labels like "OLD TOM DISTILLERY" that were previously
+ * invisible to Tesseract.
+ *
+ * Cost: ~500ms extra only when brand is missing (one additional OCR pass).
+ * Zero new dependencies.
+ *
+ * @param preprocessedBuffer - Already preprocessed (normal) image buffer
+ * @param rawImageBuffer - Original raw image buffer (needed for inverted preprocessing)
+ * @returns ExtractedFields with brand name filled from inverted pass if needed
+ */
+export async function recognizeWithFallback(
+  preprocessedBuffer: Buffer,
+  rawImageBuffer: Buffer
+): Promise<{ fields: ExtractedFields; ocrResult: OcrResult }> {
+  const start = performance.now();
+
+  // ---- Pass 1: Normal OCR ----
+  const ocrResult = await recognizeImage(preprocessedBuffer);
+  const fields = extractFields(ocrResult.text, ocrResult.confidence);
+
+  // Check if brand name was found
+  if (fields.brandName.value && fields.brandName.confidence > 0.3) {
+    console.log(
+      `[OCR Multi-Pass] Brand found on first pass: "${fields.brandName.value}" (conf: ${fields.brandName.confidence})`
+    );
+    return { fields, ocrResult };
+  }
+
+  // ---- Pass 2: High-contrast OCR (brand name recovery) ----
+  console.log("[OCR Multi-Pass] Brand not found on first pass. Running high-contrast pass...");
+  const invertedStart = performance.now();
+
+  try {
+    const invertedBuffer = await preprocessImageHighContrast(rawImageBuffer);
+    const invertedOcr = await recognizeImage(invertedBuffer);
+    const invertedFields = extractFields(invertedOcr.text, invertedOcr.confidence);
+
+    const hcElapsed = Math.round(performance.now() - invertedStart);
+    console.log(
+      `[OCR Multi-Pass] High-contrast pass complete in ${hcElapsed}ms. ` +
+      `Brand: "${invertedFields.brandName.value}" (conf: ${invertedFields.brandName.confidence})`
+    );
+
+    // Merge: take brand name from inverted pass if it found one
+    if (invertedFields.brandName.value && invertedFields.brandName.confidence > 0.2) {
+      fields.brandName = invertedFields.brandName;
+      // Also grab class/type from inverted pass if the normal pass missed it
+      if (!fields.classType.value && invertedFields.classType.value) {
+        fields.classType = invertedFields.classType;
+      }
+      // Append high-contrast raw text for debugging (separated by marker)
+      fields.rawText =
+        ocrResult.text +
+        "\n\n--- HIGH-CONTRAST PASS ---\n\n" +
+        invertedOcr.text;
+    }
+  } catch (error) {
+    // High-contrast pass is best-effort; don't fail the whole extraction
+    console.error("[OCR Multi-Pass] High-contrast pass failed:", error);
+  }
+
+  const totalElapsed = Math.round(performance.now() - start);
+  console.log(`[OCR Multi-Pass] Total multi-pass time: ${totalElapsed}ms`);
+
+  return { fields, ocrResult };
 }
 
 /**

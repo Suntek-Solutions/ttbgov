@@ -9,8 +9,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { preprocessImage } from "@/lib/ocr/preprocessor";
-import { recognizeImage } from "@/lib/ocr/engine";
-import { extractFields } from "@/lib/extraction/fieldExtractor";
+import { recognizeWithFallback } from "@/lib/ocr/engine";
 import type { ExtractResponse } from "@/lib/types";
 
 /** Max file size: 10MB */
@@ -75,14 +74,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExtractRe
 
     console.log(`[/api/extract] Received: ${file.name}, type: ${file.type}, size: ${(file.size / 1024).toFixed(0)}KB, buffer: ${imageBuffer.length} bytes`);
 
-    // Preprocess image
+    // Preprocess image (normal pass)
     const preprocessed = await preprocessImage(imageBuffer);
 
-    // Run OCR
-    const ocrResult = await recognizeImage(preprocessed);
-
-    // Extract structured fields
-    const fields = extractFields(ocrResult.text, ocrResult.confidence);
+    // Run multi-pass OCR (normal → inverted fallback if brand missing)
+    const { fields } = await recognizeWithFallback(preprocessed, imageBuffer);
 
     const processingTimeMs = Math.round(performance.now() - start);
 
