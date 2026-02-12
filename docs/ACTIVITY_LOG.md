@@ -194,3 +194,39 @@ Full documentation audit against the spec and codebase. Found and fixed 12 incon
 Squashed all local commits into single `v2.0-universal-extraction` for clean history.
 
 ---
+
+### Session 13 -- Production Deployment & OCR Adapter Documentation
+
+**2026-02-12 (Thursday, post-midnight MST)**
+
+Deployed to Azure Container Apps and verified production functionality:
+- Confirmed ONNX runtime bundles correctly (`multilingual-purejs-ocr`, `onnxruntime-node`)
+- Validated cold-start performance (5.8s), warm performance (3.7-5.8s), complex labels with fallback (10-12s)
+- All tests under 15s timeout, 0 exceeded 10s SLA
+
+Added **OCR Adapter Architecture** documentation across key files:
+- `README.md`: Added prominent section in "What Would Change for Production"
+- `docs/ARCHITECTURE.md`: New section with TypeScript code example for pluggable cloud OCR engines
+- `src/app/about/page.tsx`: Added blue-highlighted "Production Considerations" card
+
+This documents the path from current 100% local OCR (firewall-friendly) to production environments with cloud OCR options (Azure Document Intelligence, Azure Vision OCR, Google Document AI, AWS Textract) while maintaining automatic local fallback.
+
+---
+
+### Session 14 -- Final Documentation Polish
+
+**2026-02-12 (Friday, ~3:00 AM MST)**
+
+Final proof-read and polish pass:
+- Fixed typo: "Tesseract.js 7" → "Tesseract.js" (no version 7 exists)
+- Fixed GitHub URL: `Suntek-Enterprises` → `Suntek-Solutions` (correct organization)
+- Updated `risks.md` Risk #2 with production validation data
+- Updated `assumptions.md` A2 with production performance metrics (3-6s standard, 10-12s complex)
+- Updated summary table in `risks.md` with production status
+
+All documentation now accurately reflects:
+- Dual-engine approach (ONNX PaddleOCR primary + Tesseract.js fallback)
+- Production-validated performance numbers
+- Test suite metrics (3.2s avg, 3.9/7 fields on 59 labels)
+
+---
