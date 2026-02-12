@@ -321,7 +321,7 @@ export default function Home() {
               processingTimeMs={extractTime}
             />
 
-            {/* Side: Label image reference */}
+            {/* Side: Label image reference, button, and results */}
             <div className="space-y-3">
               {imagePreview && (
                 <LabelImageReference
@@ -330,47 +330,47 @@ export default function Home() {
                   extractTime={extractTime}
                 />
               )}
+
+              {/* Verify button -- always visible when we have extracted fields */}
+              <Button
+                onClick={handleVerify}
+                disabled={
+                  isVerifying ||
+                  !applicationData.brandName ||
+                  !applicationData.classType ||
+                  !applicationData.alcoholContent ||
+                  !applicationData.netContents ||
+                  !applicationData.governmentWarning
+                }
+                size="lg"
+                className="w-full text-base"
+              >
+                {isVerifying
+                  ? "Verifying..."
+                  : verifyResult
+                  ? "Re-Verify With Updated Data"
+                  : "Verify Label Against Application"}
+              </Button>
+
+              {/* Verification summary */}
+              {verifyResult && (
+                <div className={`rounded-lg border-2 p-4 text-center ${
+                  verifyResult.overall === "pass"
+                    ? "border-green-300 bg-green-50"
+                    : "border-red-300 bg-red-50"
+                }`}>
+                  <span className={`text-lg font-bold ${
+                    verifyResult.overall === "pass" ? "text-green-700" : "text-red-700"
+                  }`}>
+                    {verifyResult.overall === "pass" ? "ALL FIELDS MATCH" : "VERIFICATION FAILED"}
+                  </span>
+                  <span className="ml-2 text-sm text-gray-500">
+                    ({verifyResult.results?.filter(r => r.match).length}/{verifyResult.results?.length} pass -- {verifyResult.processingTimeMs}ms)
+                  </span>
+                </div>
+              )}
             </div>
           </div>
-
-          {/* Verify button -- always visible when we have extracted fields */}
-          <Button
-            onClick={handleVerify}
-            disabled={
-              isVerifying ||
-              !applicationData.brandName ||
-              !applicationData.classType ||
-              !applicationData.alcoholContent ||
-              !applicationData.netContents ||
-              !applicationData.governmentWarning
-            }
-            size="lg"
-            className="w-full text-base"
-          >
-            {isVerifying
-              ? "Verifying..."
-              : verifyResult
-              ? "Re-Verify With Updated Data"
-              : "Verify Label Against Application"}
-          </Button>
-
-          {/* Verification summary */}
-          {verifyResult && (
-            <div className={`rounded-lg border-2 p-4 text-center ${
-              verifyResult.overall === "pass"
-                ? "border-green-300 bg-green-50"
-                : "border-red-300 bg-red-50"
-            }`}>
-              <span className={`text-lg font-bold ${
-                verifyResult.overall === "pass" ? "text-green-700" : "text-red-700"
-              }`}>
-                {verifyResult.overall === "pass" ? "ALL FIELDS MATCH" : "VERIFICATION FAILED"}
-              </span>
-              <span className="ml-2 text-sm text-gray-500">
-                ({verifyResult.results?.filter(r => r.match).length}/{verifyResult.results?.length} pass -- {verifyResult.processingTimeMs}ms)
-              </span>
-            </div>
-          )}
         </>
       )}
     </div>
