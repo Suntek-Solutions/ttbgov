@@ -272,10 +272,17 @@ Deployed latest version to Azure Container Apps including all improvements since
 - Scripts directory documentation
 - Day-of-week fixes
 
-**Deployment:**
+**Deployment Details:**
 - Image: `ttblabelacr.azurecr.io/ttb-label-verification:latest`
 - Build time: ~3.5 minutes
 - Digest: `sha256:70921bedc22e8eaaee1f324c04445430490fc3f6bae97620197087ce838c1070`
-- Status: ✅ Live at https://ttb-label-verification.delightfulbeach-49152395.eastus.azurecontainerapps.io
+- Revision: `ttb-label-verification--0000002` (forced new revision with BUILD_TIMESTAMP env var)
+- Status: ✅ Live and verified working at https://ttb-label-verification.delightfulbeach-49152395.eastus.azurecontainerapps.io
+
+**Verification:**
+- ✅ Demo label selection: Clicking demo labels now immediately shows preview in upload area
+- ✅ Visual feedback: Green border, clear filename display, enabled Extract button
+- ✅ Debug console: Confirms image selection and data pre-fill
+- ✅ All UX improvements from local testing now live in production
 
 ---
