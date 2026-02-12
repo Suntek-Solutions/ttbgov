@@ -230,18 +230,26 @@ export default function AboutPage() {
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-gray-600">
           <p>
-            <strong>Complex Label Designs:</strong> The multi-pass OCR handles
-            most label styles including decorative fonts and dark backgrounds.
-            However, text embedded in graphical logos, rotated/vertical text,
-            and heavily illustrated labels (e.g. ornate spirit bottles) may
-            produce partial or inaccurate extractions. The agent can always
-            verify these fields visually using the side-by-side comparison view.
+            <strong>Image Quality Impacts Accuracy:</strong> Tested against 59
+            diverse labels (5 AI-generated + 54 real COLA registry images):
+          </p>
+          <ul className="ml-6 list-disc space-y-1 text-sm">
+            <li>High-quality scans/photos: 6.2/7 fields avg (89%)</li>
+            <li>Best real COLA labels: 7/7 fields</li>
+            <li>Typical COLA registry images: 3.9/7 fields avg (56%)</li>
+          </ul>
+          <p>
+            Best results come from flat, well-lit scans or straight-on photos
+            with high contrast and resolution &gt; 800px. Heavily angled shots,
+            extreme glare, or compressed images produce lower field counts.
           </p>
           <p>
-            <strong>Image Quality:</strong> Best results come from flat,
-            well-lit scans or photos. Heavily angled shots, extreme glare, or
-            very low resolution images may produce lower confidence scores or
-            incomplete extraction.
+            <strong>Complex Label Designs:</strong> The multi-pass OCR handles
+            most label styles including decorative fonts and dark backgrounds.
+            However, vertical/curved text, text in graphical logos, highly
+            decorative fonts, and text on dark/textured backgrounds may produce
+            partial extractions. The agent can always verify visually using the
+            side-by-side comparison view.
           </p>
           <p>
             <strong>English Only:</strong> The OCR engine is configured for
