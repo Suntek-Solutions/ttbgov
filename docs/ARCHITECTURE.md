@@ -23,7 +23,7 @@ flowchart TB
 
     subgraph engine [Processing Engine - All Local]
         Preprocess["Image Preprocessor\n(sharp: grayscale, contrast,\nresize, sharpen, denoise)"]
-        OCR["Tesseract.js OCR\n(persistent LSTM worker pool)"]
+        OCR["Dual OCR (ONNX PaddleOCR + Tesseract.js)\n(persistent worker pool)"]
         FieldParser["Field Extractor\n(regex + heuristic parsing)"]
         Comparator["Field Comparator\n(fuzzy match + numeric normalize)"]
         WarningCheck["Gov Warning Validator\n(exact text + all-caps prefix)"]
@@ -52,7 +52,7 @@ sequenceDiagram
     participant UI as React Frontend
     participant API as API Routes
     participant Pre as Image Preprocessor
-    participant OCR as Tesseract.js
+    participant OCR as Tesseract.js (+ ONNX PaddleOCR)
     participant Ext as Field Extractor
     participant Ver as Comparator
     participant Warn as Warning Validator
@@ -62,7 +62,7 @@ sequenceDiagram
     API->>Pre: Preprocess image
     Pre->>Pre: Grayscale + contrast + sharpen + resize
     Pre->>OCR: Send preprocessed image
-    OCR->>OCR: LSTM neural network OCR
+    OCR->>OCR: ONNX PaddleOCR (primary) or Tesseract.js LSTM (fallback)
     OCR->>Ext: Raw text + confidence
     Ext->>Ext: Regex + heuristic field parsing
     Ext->>API: Structured fields + confidence scores
@@ -88,7 +88,8 @@ sequenceDiagram
 
 | File | Responsibility |
 |---|---|
-| `engine.ts` | Manages Tesseract.js worker pool. Creates workers on server startup, keeps them warm between requests, handles cleanup. Exposes a simple `recognize(imageBuffer)` interface to the rest of the app. |
+| `engine.ts` | Manages dual OCR: ONNX PaddleOCR (primary) + Tesseract.js worker pool (fallback). Creates workers on server startup, keeps them warm between requests, handles cleanup. Exposes a simple `recognize(imageBuffer)` interface to the rest of the app. |
+| `onnx.ts` | ONNX PaddleOCR engine wrapper (multilingual-purejs-ocr). Singleton instance, lazy initialization, paragraph-grouped text output. |
 | `preprocessor.ts` | Image preprocessing pipeline using sharp. Takes a raw image buffer, applies grayscale conversion, contrast enhancement, sharpening, noise reduction, and resize. Returns an optimized buffer ready for OCR. |
 
 ### `src/lib/extraction/`
@@ -257,7 +258,7 @@ Accepts multiple label images, processes them in parallel batches of 3, returns 
 
 | Optimization | Target | Rationale |
 |---|---|---|
-| Persistent Tesseract worker pool | Eliminate cold start | Workers load WASM + language data once on server boot (~3-5s). Subsequent requests skip this entirely. |
+| Persistent dual OCR pool (ONNX PaddleOCR + Tesseract.js) | Eliminate cold start | ONNX PaddleOCR singleton + Tesseract workers load WASM + language data once on server boot (~3-5s). Subsequent requests skip this entirely. |
 | Image preprocessing before OCR | Reduce OCR processing time + improve accuracy | Grayscale + contrast + resize takes ~100-200ms but can cut OCR time significantly by providing cleaner input. |
 | Azure Container Apps (always-on) | Keep workers warm | Serverless (Vercel) spins down between requests, triggering cold starts. Azure Container Apps keeps the process running. |
 | Parallel batch processing | Handle bulk uploads | Process 3-5 labels concurrently to balance throughput against memory constraints. |
@@ -272,7 +273,7 @@ Accepts multiple label images, processes them in parallel batches of 3, returns 
 flowchart LR
     Browser["Agent's Browser"] -->|HTTPS| AzureCA["Azure Container Apps\n(Docker container)"]
     AzureCA -->|Serves| NextApp["Next.js App\n(React UI + API)"]
-    NextApp -->|Uses locally| TessWorker["Tesseract.js\nWorker Pool"]
+    NextApp -->|Uses locally| TessWorker["Dual OCR\n(ONNX PaddleOCR + Tesseract.js)"]
     NextApp -->|Uses locally| SharpLib["sharp\nImage Processing"]
 
     subgraph noExternal [No External Dependencies]

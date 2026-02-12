@@ -77,7 +77,7 @@ The spec buries this in conversational text, but the core problem is simple:
 
 Everything else (batch upload, image preprocessing, fuzzy matching, government warning validation) is a feature that supports or enhances that core comparison.
 
-### Decision 2: Cloud AI vs. Local OCR
+### Decision 2: Cloud AI vs. Dual Local OCR
 
 This was the highest-impact architectural decision. Here is how I evaluated the options:
 
@@ -91,10 +91,10 @@ This was the highest-impact architectural decision. Here is how I evaluated the 
 - Cons: Requires GPU server for reasonable speed ($$$), large model downloads, complex deployment, evaluators can't easily run it locally
 - Verdict: **Eliminated.** Too heavy for a prototype. Deployment cost and complexity are disproportionate to the ask.
 
-**Option C: Tesseract.js (local OCR engine)**
+**Option C: Dual Local OCR (ONNX PaddleOCR + Tesseract.js)** -- ONNX PaddleOCR (PP-OCRv4) as primary for high accuracy, Tesseract.js multi-pass as fallback. Both run 100% locally via ONNX Runtime + LSTM neural network. Zero cloud dependency.
 - Pros: Runs on any server (no GPU needed), zero API calls, bundled with the app, mature and proven, WASM-based so works in Node.js, free
 - Cons: Less accurate than cloud vision AI on complex layouts, requires image preprocessing to get good results, extracts raw text (not structured fields) so we need custom parsing
-- Verdict: **Selected.** Best fit for the constraints. The accuracy gap is addressed by image preprocessing + smart field extraction logic. The structured extraction gap is addressed by regex + heuristic parsing.
+- Verdict: **Selected.** Dual-engine approach provides high accuracy locally while meeting all firewall and performance constraints.
 
 **Option D: Hybrid (Tesseract.js primary, optional cloud AI enhancement)**
 - Considered but rejected for simplicity. A working core with clean code is preferred over ambitious features. The optional cloud path can be documented as a "future enhancement" in APPROACH.md.

@@ -4,9 +4,9 @@ This document captures every area of the plan where there is risk, uncertainty, 
 
 ---
 
-## 1. Tesseract.js OCR Accuracy on Real Label Images
+## 1. OCR Accuracy on Real Label Images
 
-**The concern:** Tesseract.js is a general-purpose OCR engine. It was not built for alcohol label extraction specifically. Real-world labels have decorative fonts, curved text, overlapping design elements, gold foil, embossing, and low-contrast text on dark backgrounds. Tesseract may struggle with these compared to a cloud vision model like GPT-4o or Google Vision.
+**The concern:** Our OCR approach uses ONNX PaddleOCR (PP-OCRv4, primary) + Tesseract.js (fallback). Neither was built for alcohol label extraction specifically. Real-world labels have decorative fonts, curved text, overlapping design elements, gold foil, embossing, and low-contrast text on dark backgrounds. Tesseract may struggle with these compared to a cloud vision model like GPT-4o or Google Vision.
 
 **Why this matters:** If the OCR cannot reliably extract text from the label image, the entire downstream pipeline (field extraction, comparison, verification) produces garbage. This is the single highest-risk component in the plan.
 
@@ -14,6 +14,7 @@ This document captures every area of the plan where there is risk, uncertainty, 
 
 **Status: SIGNIFICANTLY MITIGATED.** Through iterative testing and diagnostic work, we developed a multi-pass OCR strategy that dramatically improved accuracy:
 
+0. **Dual-engine approach** -- Added ONNX PaddleOCR (PP-OCRv4 via multilingual-purejs-ocr) as primary OCR engine. Dramatically better on dark backgrounds (Corte Adagio, Casamigos), decorative fonts, and complex layouts. Tesseract.js serves as multi-pass fallback.
 1. **PSM initialization fix** -- Discovered that Tesseract.js workers skip large decorative text unless `tessedit_pageseg_mode` is explicitly set (even to the default value "3"). This single fix recovered brand names like "OLD TOM DISTILLERY" that were previously invisible.
 2. **Three-pass preprocessing pipeline:**
    - Pass 1: Normal (resize 1200px + grayscale + normalize + sharpen) -- best for standard dark-on-light text
@@ -28,7 +29,7 @@ This document captures every area of the plan where there is risk, uncertainty, 
 - Real COLA average: ~4/7 fields detected per label
 - Remaining gaps: graphical logos, rotated/vertical text, and highly decorative fonts
 
-**Severity: MEDIUM (mitigated from HIGH). Working well on clean labels, graceful degradation on complex ones.**
+**Severity: MEDIUM (mitigated from HIGH via dual-engine: ONNX PaddleOCR + Tesseract.js)**
 
 ---
 

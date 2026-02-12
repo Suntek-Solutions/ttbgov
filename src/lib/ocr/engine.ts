@@ -1,13 +1,23 @@
 /**
- * Tesseract.js OCR Engine
+ * Dual OCR Engine: ONNX PaddleOCR (primary) + Tesseract.js (fallback)
  *
- * Manages a persistent worker pool for fast, repeated OCR processing.
- * Workers are created once on first use and reused across requests,
- * avoiding the 3-5 second cold start per request.
+ * Primary: multilingual-purejs-ocr (PP-OCRv4 via ONNX Runtime)
+ *   - Dramatically better accuracy on real COLA labels
+ *   - Built-in paragraph grouping with proper text spacing
+ *   - 0.5-2s per label (faster than Tesseract multi-pass)
+ *   - 100% local, zero API calls
+ *
+ * Fallback: Tesseract.js (LSTM) with multi-pass preprocessing
+ *   - Used when ONNX OCR is unavailable or for gap-filling
+ *   - Pass 1: Normal (resize + grayscale + normalize + sharpen)
+ *   - Pass 2: High-contrast threshold (binary threshold)
+ *   - Pass 3: Color inversion at 2000px (for dark backgrounds)
+ *
+ * Both engines run 100% locally -- zero cloud dependency.
  *
  * Usage:
- *   import { recognizeImage } from "@/lib/ocr/engine";
- *   const result = await recognizeImage(imageBuffer);
+ *   import { recognizeWithFallback } from "@/lib/ocr/engine";
+ *   const { fields } = await recognizeWithFallback(preprocessed, raw);
  */
 
 import { createWorker, createScheduler, type Worker, type Scheduler } from "tesseract.js";
@@ -15,6 +25,7 @@ import { join } from "path";
 import type { OcrResult, ExtractedFields } from "@/lib/types";
 import { preprocessImageHighContrast, preprocessImageInverted } from "@/lib/ocr/preprocessor";
 import { extractFields } from "@/lib/extraction/fieldExtractor";
+import { recognizeWithOnnx, isOnnxAvailable } from "@/lib/ocr/onnx";
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -72,7 +83,7 @@ async function ensureInitialized(): Promise<Scheduler> {
         // Discovered via diagnostic testing: default fails, explicit PSM 3 succeeds.
         for (const worker of workers) {
           await worker.setParameters({
-            tessedit_pageseg_mode: "3" as unknown as string,
+            tessedit_pageseg_mode: "3" as never,
           });
           newScheduler.addWorker(worker);
         }
@@ -157,25 +168,19 @@ function mergeFields(primary: ExtractedFields, secondary: ExtractedFields): void
 }
 
 /**
- * Multi-pass OCR with three strategies:
+ * Dual-engine OCR: ONNX PaddleOCR primary, Tesseract multi-pass fallback.
  *
- * Pass 1 (always): Normal preprocessing (resize + grayscale + normalize + sharpen)
- *   - Best for standard labels with dark text on light backgrounds
+ * Strategy:
+ * 1. Try ONNX OCR on the raw image (best accuracy, 0.5-2s)
+ * 2. Run Tesseract normal pass -- merge any new fields into best result
+ * 3. If still < 7 fields, run Tesseract threshold/inversion passes
  *
- * Pass 2 (if fields missing): High-contrast threshold (resize + grayscale + threshold)
- *   - Recovers large decorative text destroyed by normalize()
- *   - e.g. "OLD TOM DISTILLERY" in oversized serif fonts
+ * A persistent `best` variable accumulates the best field values across
+ * all engines and passes. Each pass only fills in fields that are still missing.
  *
- * Pass 3 (if fields still missing): Color inversion (resize + negate + grayscale + normalize)
- *   - For light-text-on-dark-background labels (Corte Adagio, Casamigos)
- *   - Converts light-on-dark to dark-on-light for Tesseract
- *
- * Results are merged: each pass fills in missing fields from previous passes.
- * Cost: ~500ms per additional pass. Only runs when fields are missing.
- *
- * @param preprocessedBuffer - Already preprocessed (normal) image buffer
- * @param rawImageBuffer - Original raw image buffer (for alternate preprocessing)
- * @returns ExtractedFields with best results merged across all passes
+ * @param preprocessedBuffer - Preprocessed image buffer (for Tesseract)
+ * @param rawImageBuffer - Original raw image buffer (for ONNX + alt preprocessing)
+ * @returns ExtractedFields with best results merged across all engines
  */
 export async function recognizeWithFallback(
   preprocessedBuffer: Buffer,
@@ -183,104 +188,126 @@ export async function recognizeWithFallback(
 ): Promise<{ fields: ExtractedFields; ocrResult: OcrResult }> {
   const start = performance.now();
 
-  // ---- Pass 1: Normal OCR ----
-  const ocrResult = await recognizeImage(preprocessedBuffer);
-  const fields = extractFields(ocrResult.text, ocrResult.confidence);
-  const pass1Count = countFields(fields);
+  // Accumulates the best fields across all engines/passes
+  let best: ExtractedFields | null = null;
+  let bestOcrResult: OcrResult = { text: "", confidence: 0, processingTimeMs: 0 };
+  let rawTexts: string[] = [];
 
-  console.log(
-    `[OCR Multi-Pass] Pass 1 (normal): ${pass1Count}/7 fields, ` +
-    `brand: "${fields.brandName.value ?? "null"}" (${fields.brandName.confidence})`
-  );
-
-  // Only skip fallbacks if ALL 7 fields were found on the first pass.
-  // Even if pass 1 found 5-6 fields, pass 2 may recover the missing ones
-  // (e.g., "750m" truncated in normal pass becomes "750 ml" in threshold pass).
-  if (pass1Count >= 7) {
-    console.log(`[OCR Multi-Pass] Pass 1 perfect (7/7). Done in ${Math.round(performance.now() - start)}ms`);
-    return { fields, ocrResult };
-  }
-
-  // ---- Pass 2: High-contrast threshold ----
-  let pass2Gained = 0;
+  // ---- Engine 1: ONNX PaddleOCR (primary) ----
   try {
-    console.log("[OCR Multi-Pass] Running Pass 2 (high-contrast threshold)...");
-    const hcBuffer = await preprocessImageHighContrast(rawImageBuffer);
-    const hcOcr = await recognizeImage(hcBuffer);
-    const hcFields = extractFields(hcOcr.text, hcOcr.confidence);
-    const pass2Count = countFields(hcFields);
-    pass2Gained = pass2Count - pass1Count;
+    const available = await isOnnxAvailable();
+    if (available) {
+      console.log("[OCR Engine] Trying ONNX PaddleOCR (primary)...");
+      const onnxResult = await recognizeWithOnnx(rawImageBuffer);
+      const onnxFields = extractFields(onnxResult.text, onnxResult.confidence);
+      const onnxCount = countFields(onnxFields);
 
-    console.log(
-      `[OCR Multi-Pass] Pass 2 result: ${pass2Count}/7 fields (+${pass2Gained}), ` +
-      `brand: "${hcFields.brandName.value ?? "null"}" (${hcFields.brandName.confidence})`
-    );
+      console.log(
+        `[OCR Engine] ONNX: ${onnxCount}/7 fields, ` +
+        `brand: "${onnxFields.brandName.value ?? "null"}" (${onnxFields.brandName.confidence})`
+      );
 
-    // If pass 2 found MORE total fields, use it as the primary and merge pass 1 into it
-    if (pass2Count > pass1Count) {
-      mergeFields(hcFields, fields);
-      hcFields.rawText = ocrResult.text + "\n\n--- HIGH-CONTRAST PASS (primary) ---\n\n" + hcOcr.text;
-      Object.assign(fields, hcFields);
-    } else {
-      mergeFields(fields, hcFields);
-      if (hcOcr.text !== ocrResult.text) {
-        fields.rawText = ocrResult.text + "\n\n--- HIGH-CONTRAST PASS ---\n\n" + hcOcr.text;
+      best = onnxFields;
+      bestOcrResult = onnxResult;
+      rawTexts.push(onnxResult.text);
+
+      // If ONNX got 7/7, we're done
+      if (onnxCount >= 7) {
+        console.log(`[OCR Engine] ONNX perfect (7/7). Done in ${Math.round(performance.now() - start)}ms`);
+        return { fields: best, ocrResult: bestOcrResult };
       }
     }
   } catch (error) {
-    console.error("[OCR Multi-Pass] Pass 2 failed:", error);
+    console.error("[OCR Engine] ONNX failed:", error);
   }
 
-  // Smart threshold for Pass 3 (expensive inversion):
-  // - Skip if we already have 7/7 fields
-  // - Skip if Pass 2 gained nothing AND we have 5+ fields (label is readable, just limited visible fields)
-  // - Run if we have < 5 fields or if Pass 2 found new fields (suggests different preprocessing helps)
-  const afterPass2 = countFields(fields);
-  if (afterPass2 >= 7) {
-    console.log(`[OCR Multi-Pass] Perfect after Pass 2 (7/7 fields). Done in ${Math.round(performance.now() - start)}ms`);
-    return { fields, ocrResult };
+  // ---- Engine 2: Tesseract normal pass ----
+  const tessResult = await recognizeImage(preprocessedBuffer);
+  const tessFields = extractFields(tessResult.text, tessResult.confidence);
+  const tessCount = countFields(tessFields);
+
+  console.log(
+    `[OCR Engine] Tesseract normal: ${tessCount}/7 fields, ` +
+    `brand: "${tessFields.brandName.value ?? "null"}" (${tessFields.brandName.confidence})`
+  );
+
+  if (!best) {
+    best = tessFields;
+    bestOcrResult = tessResult;
+  } else {
+    // Merge Tesseract into ONNX results (only fills missing fields)
+    mergeFields(best, tessFields);
+  }
+  rawTexts.push(tessResult.text);
+
+  // Check if we have enough after ONNX + Tesseract normal
+  let currentCount = countFields(best);
+  if (currentCount >= 7) {
+    best.rawText = rawTexts.join("\n\n--- TESSERACT PASS ---\n\n");
+    console.log(`[OCR Engine] Perfect after merge (7/7). Done in ${Math.round(performance.now() - start)}ms`);
+    return { fields: best, ocrResult: bestOcrResult };
   }
 
-  if (pass2Gained <= 0 && afterPass2 >= 5) {
-    // Pass 2 didn't help and we already have most fields -- the missing ones
-    // are likely not on this label at all. Skip the expensive inversion pass.
-    console.log(`[OCR Multi-Pass] Pass 2 gained nothing, have ${afterPass2}/7 fields. Skipping inversion. Done in ${Math.round(performance.now() - start)}ms`);
-    return { fields, ocrResult };
+  // If ONNX + Tesseract already gave us 5+ fields, skip expensive extra passes
+  if (currentCount >= 5) {
+    best.rawText = rawTexts.join("\n\n---\n\n");
+    console.log(`[OCR Engine] Good enough (${currentCount}/7). Done in ${Math.round(performance.now() - start)}ms`);
+    return { fields: best, ocrResult: bestOcrResult };
   }
 
-  // ---- Pass 3: Color inversion (for light-on-dark labels) ----
-  // Uses a higher target resolution (2000px) for the inverted pass to preserve
-  // thin/delicate fonts that get destroyed at 1200px after inversion.
+  // ---- Tesseract Pass 2: High-contrast threshold ----
+  let pass2Gained = 0;
   try {
-    console.log("[OCR Multi-Pass] Running Pass 3 (color inversion for dark backgrounds)...");
+    console.log("[OCR Engine] Running Tesseract Pass 2 (high-contrast threshold)...");
+    const hcBuffer = await preprocessImageHighContrast(rawImageBuffer);
+    const hcOcr = await recognizeImage(hcBuffer);
+    const hcFields = extractFields(hcOcr.text, hcOcr.confidence);
+    const beforeMerge = countFields(best);
+    mergeFields(best, hcFields);
+    pass2Gained = countFields(best) - beforeMerge;
+    rawTexts.push(hcOcr.text);
+
+    console.log(`[OCR Engine] Pass 2: +${pass2Gained} new fields, total: ${countFields(best)}/7`);
+  } catch (error) {
+    console.error("[OCR Engine] Pass 2 failed:", error);
+  }
+
+  // Check after pass 2
+  currentCount = countFields(best);
+  if (currentCount >= 7) {
+    best.rawText = rawTexts.join("\n\n---\n\n");
+    console.log(`[OCR Engine] Perfect after Pass 2 (7/7). Done in ${Math.round(performance.now() - start)}ms`);
+    return { fields: best, ocrResult: bestOcrResult };
+  }
+
+  // Skip inversion if pass 2 gained nothing and we have decent results
+  if (pass2Gained <= 0 && currentCount >= 4) {
+    best.rawText = rawTexts.join("\n\n---\n\n");
+    console.log(`[OCR Engine] Pass 2 gained nothing, have ${currentCount}/7. Done in ${Math.round(performance.now() - start)}ms`);
+    return { fields: best, ocrResult: bestOcrResult };
+  }
+
+  // ---- Tesseract Pass 3: Color inversion (for dark backgrounds) ----
+  try {
+    console.log("[OCR Engine] Running Tesseract Pass 3 (color inversion)...");
     const invBuffer = await preprocessImageInverted(rawImageBuffer);
     const invOcr = await recognizeImage(invBuffer);
     const invFields = extractFields(invOcr.text, invOcr.confidence);
-    const pass3Count = countFields(invFields);
+    const beforeMerge = countFields(best);
+    mergeFields(best, invFields);
+    const pass3Gained = countFields(best) - beforeMerge;
+    rawTexts.push(invOcr.text);
 
-    console.log(
-      `[OCR Multi-Pass] Pass 3 result: ${pass3Count}/7 fields, ` +
-      `brand: "${invFields.brandName.value ?? "null"}" (${invFields.brandName.confidence})`
-    );
-
-    // If inversion found MORE total fields, use it as primary
-    const currentCount = countFields(fields);
-    if (pass3Count > currentCount) {
-      mergeFields(invFields, fields);
-      invFields.rawText = (fields.rawText || ocrResult.text) + "\n\n--- INVERTED PASS (primary) ---\n\n" + invOcr.text;
-      Object.assign(fields, invFields);
-    } else {
-      mergeFields(fields, invFields);
-      fields.rawText = (fields.rawText || ocrResult.text) + "\n\n--- INVERTED PASS ---\n\n" + invOcr.text;
-    }
+    console.log(`[OCR Engine] Pass 3: +${pass3Gained} new fields, total: ${countFields(best)}/7`);
   } catch (error) {
-    console.error("[OCR Multi-Pass] Pass 3 failed:", error);
+    console.error("[OCR Engine] Pass 3 failed:", error);
   }
 
+  best.rawText = rawTexts.join("\n\n---\n\n");
   const totalElapsed = Math.round(performance.now() - start);
-  console.log(`[OCR Multi-Pass] Final: ${countFields(fields)}/7 fields in ${totalElapsed}ms`);
+  console.log(`[OCR Engine] Final: ${countFields(best)}/7 fields in ${totalElapsed}ms`);
 
-  return { fields, ocrResult };
+  return { fields: best, ocrResult: bestOcrResult };
 }
 
 /**

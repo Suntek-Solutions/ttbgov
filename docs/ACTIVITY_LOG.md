@@ -41,8 +41,8 @@ Project activity history for the TTB Label Verification App. Maintained througho
 
 ## Current Project State
 
-**Phase:** Multi-pass OCR engine complete. All core features implemented and tested. Pending: Azure redeploy with OCR improvements (v8).
-**Live URL:** https://ttb-label-verification.delightfulbeach-49152395.eastus.azurecontainerapps.io (v7 deployed; v8 with OCR improvements pending)
+**Phase:** Dual OCR engine complete (ONNX PaddleOCR primary + Tesseract.js fallback). All core features implemented, tested, and documented. Pending: Azure redeploy (v8).
+**Live URL:** https://ttb-label-verification.delightfulbeach-49152395.eastus.azurecontainerapps.io (v7 deployed; v8 with dual OCR engine pending)
 **Plan reference:** `.cursor/plans/ttb_label_verification_app_cf38bd97.plan.md`
 
 ---
@@ -422,4 +422,43 @@ Demo data & documentation updates:
 
 **Files changed (9):** `engine.ts`, `preprocessor.ts`, `fieldExtractor.ts`, `patterns.ts`, `demo-labels.json`, `risks.md`, `APPROACH.md`, `about/page.tsx`, `ACTIVITY_LOG.md`
 
-**Pending:** Azure redeploy with OCR improvements (v8)
+**Completed next session:** ONNX PaddleOCR dual-engine integration (Session 8 below).
+
+---
+
+### Session 8: ONNX PaddleOCR Integration + Full Doc Alignment
+
+**Time:** Feb 11, 2026 ~7:00 PM – ~8:00 PM MST (1h)
+**Who:** Scott + AI agent
+
+**What was done:**
+
+ONNX PaddleOCR integration (the major accuracy upgrade):
+- Installed `multilingual-purejs-ocr` -- ONNX PaddleOCR PP-OCRv4, 100% local, zero cloud API, zero Python dependency
+- Built `src/lib/ocr/onnx.ts`: singleton engine wrapper with lazy init, temp file management, paragraph-grouped text output
+- Rewrote `src/lib/ocr/engine.ts` with `best` field accumulator: ONNX primary → Tesseract normal → threshold/inversion passes, each merging into accumulated best result
+- Fixed field loss bug: ONNX results (e.g. "CORTE ADAGIO") were being overwritten by Tesseract fallback. Restructured to persistent `best` variable.
+- Added `ABV_PATTERN_MIN` for ONNX-split "ALC X%" without vol suffix
+- Added `NET_CONTENTS_PATTERN_ALT` for OCR-truncated "750m" (missing L)
+- Changed multi-pass threshold from >=5 to >=7 (always try pass 2 unless perfect)
+- Updated `next.config.ts`: added `multilingual-purejs-ocr` and `onnxruntime-node` to serverExternalPackages
+
+Test results (9-label benchmark, ONNX + Tesseract merged):
+- Compliant: 7/7, Filadoro: 7/7, brand-mismatch: 6/7, missing-warning: 6/7
+- Casamigos (dark bg): 4/7, Barrilito: 5/7 (+ABV), South Bank: 4/7 (+class +net)
+- Corte Adagio (dark bg): 2/7 (brand + class -- was 1/7 with Tesseract alone)
+- Monkey 47 (complex): 3/7 (class + ABV -- was 1/7 with Tesseract alone)
+- Speed: 1.5-5.5s per label, all under 5.5s
+
+Full documentation alignment (58 issues fixed across 10 files):
+- README.md: tech stack, workflow description, trade-offs, production roadmap
+- APPROACH.md: OCR strategy, tools table, assumptions, trade-offs
+- ARCHITECTURE.md: diagrams, module table, sequence flows
+- about/page.tsx: Step 2 card, technical details, limitations
+- risks.md, assumptions.md, rationale.md: all updated for dual-engine
+- Every reference to "Tesseract.js only" replaced with dual-engine description
+- All 39 unit tests pass
+
+**Files changed:** `onnx.ts` (new), `engine.ts`, `preprocessor.ts`, `fieldExtractor.ts`, `patterns.ts`, `next.config.ts`, `package.json`, `README.md`, `APPROACH.md`, `ARCHITECTURE.md`, `about/page.tsx`, `risks.md`, `assumptions.md`, `rationale.md`, `ACTIVITY_LOG.md`
+
+**Pending:** Azure redeploy with dual OCR engine (v8)

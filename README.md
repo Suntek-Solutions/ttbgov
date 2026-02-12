@@ -54,7 +54,7 @@ cp .env.example .env.local
 A compliance agent reviews ~150,000 label applications per year. Each review involves comparing what's printed on a physical label against what's declared in the application. This tool automates that comparison:
 
 1. **Upload** a label image (drag-and-drop or file picker)
-2. **AI extracts** all text from the label using Tesseract.js (runs locally, no cloud APIs)
+2. **AI extracts** all text from the label using dual OCR engines (ONNX PaddleOCR primary + Tesseract.js fallback), both running locally with no cloud APIs
 3. **Enter application data** in a simple form (brand name, ABV, class/type, etc.)
 4. **Get instant results** -- field-by-field pass/fail with confidence scores
 
@@ -75,14 +75,14 @@ A compliance agent reviews ~150,000 label applications per year. Each review inv
 |---|---|---|
 | Framework | Next.js 16 (TypeScript) | Single codebase, single deployment, type-safe |
 | UI | React 19 + Tailwind CSS 4 + shadcn/ui | Accessible, clean, responsive -- usable by non-technical staff |
-| OCR | Tesseract.js 7 | Local OCR engine (LSTM neural network), no cloud API calls, works behind firewalls |
+| OCR | ONNX PaddleOCR (primary) + Tesseract.js 7 (fallback) | Dual local OCR: PaddleOCR PP-OCRv4 for high accuracy on complex labels, Tesseract.js multi-pass fallback. Zero cloud dependency |
 | Image Processing | sharp | Fast native Node.js image manipulation for preprocessing |
 | Fuzzy Matching | string-similarity-js | Case/punctuation-normalized comparison with confidence scores |
 | Deployment | Azure Container Apps | Persistent container, always-on, aligns with TTB's Azure infrastructure |
 
 ### Why Local OCR Instead of Cloud AI?
 
-The TTB network blocks outbound traffic to many domains. A previous vendor's cloud ML endpoints were blocked by the firewall. Tesseract.js runs entirely on the app server -- zero outbound API calls for core functionality. See [docs/APPROACH.md](docs/APPROACH.md) for the full decision rationale.
+The TTB network blocks outbound traffic to many domains. A previous vendor's cloud ML endpoints were blocked by the firewall. Both OCR engines (ONNX PaddleOCR and Tesseract.js) run entirely on the app server -- zero outbound API calls for core functionality. See [docs/APPROACH.md](docs/APPROACH.md) for the full decision rationale.
 
 ---
 
@@ -121,7 +121,7 @@ ttbgov/
 │   │   └── api/                 # REST endpoints (extract, verify, batch)
 │   ├── components/              # React UI components
 │   └── lib/                     # Core processing logic
-│       ├── ocr/                 # Tesseract.js engine + sharp preprocessing
+│       ├── ocr/                 # Dual OCR (ONNX PaddleOCR + Tesseract.js) + sharp preprocessing
 │       ├── extraction/          # OCR text → structured fields (regex + heuristics)
 │       └── verification/        # Field comparison (fuzzy, numeric, exact)
 ├── public/test-labels/          # Test labels (generated + COLA reference data)
@@ -136,7 +136,7 @@ ttbgov/
 
 | Decision | Trade-off | Why we accepted it |
 |---|---|---|
-| Tesseract.js over cloud AI | Lower accuracy on complex layouts (mitigated by multi-pass OCR) | No cloud dependency, works behind firewalls, meets the constraint Marcus described |
+| Dual local OCR over cloud AI | Lower accuracy on very complex layouts (mitigated by dual-engine + multi-pass) | No cloud dependency, works behind firewalls, meets the constraint Marcus described |
 | Fuzzy matching for text fields | Could allow false positives on genuinely different names | Dave's example showed exact matching produces false negatives that are worse for workflow |
 | No persistent storage | Results not saved between sessions | Marcus said "don't do anything crazy" -- prototype scope, no data retention needed |
 | No COLA integration | Agent enters data manually | Standalone prototype per spec -- COLA integration is a production concern |
@@ -174,7 +174,7 @@ docker run -p 3000:3000 ttb-label-verification
 This is a prototype. A production deployment at TTB would require:
 
 - **COLA system integration** for automated application data import
-- **Azure AI Document Intelligence** for higher-accuracy OCR (once firewall rules allow)
+- **Azure AI Document Intelligence** as optional cloud OCR (current dual-engine local OCR already achieves high accuracy on most labels)
 - **User authentication and RBAC** for agent accounts
 - **Audit logging** and document retention per federal compliance requirements
 - **Database** for processing history, batch tracking, and reporting

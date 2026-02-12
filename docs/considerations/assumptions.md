@@ -4,9 +4,9 @@ This document lists every assumption made during the planning phase that was not
 
 ---
 
-## A1: Tesseract.js Can Achieve Acceptable OCR Accuracy on Alcohol Labels
+## A1: Local OCR Engines Can Achieve Acceptable Accuracy
 
-**What we assumed:** Tesseract.js, combined with image preprocessing (grayscale, contrast enhancement, sharpening, resize), will produce OCR text that is accurate enough to extract structured label fields for the majority of well-photographed labels.
+**What we assumed:** ONNX PaddleOCR (primary) + Tesseract.js (fallback), combined with image preprocessing (grayscale, contrast enhancement, sharpening, resize), will produce OCR text that is accurate enough to extract structured label fields for the majority of well-photographed labels.
 
 **Why we assumed this:** Tesseract is the most widely deployed open-source OCR engine. It uses an LSTM neural network and is well-documented for document and label scanning. We read Tesseract.js performance docs confirming improved accuracy in recent versions (v5+ reduced memory 47%, improved runtime). However, we did not test it on actual alcohol label images.
 
@@ -16,15 +16,15 @@ This document lists every assumption made during the planning phase that was not
 - Accuracy on small-font government warning text
 - Accuracy on labels with complex backgrounds (gold foil, embossing, textured paper)
 
-**If this assumption is wrong:** See risks.md #1. We pivot to PaddleOCR (Python sidecar), or add an optional cloud API mode, or reduce scope to "assisted" rather than "automated" extraction.
+**If this assumption is wrong:** See risks.md #1. Implemented ONNX PaddleOCR (multilingual-purejs-ocr) as primary engine -- validated in testing.
 
 ---
 
-## A2: Tesseract.js OCR Completes in 1-3 Seconds with a Warm Worker
+## A2: OCR Engines Complete Within 5 Seconds
 
-**What we assumed:** A persistent Tesseract.js worker on Azure Container Apps will process a preprocessed label image in approximately 1-3 seconds, keeping total response time under 5 seconds.
+**What we assumed:** ONNX PaddleOCR (0.5-2s) + persistent Tesseract.js worker pool (1-3s fallback) on Azure Container Apps will process a preprocessed label image in approximately 1-3 seconds, keeping total response time under 5 seconds.
 
-**Why we assumed this:** Tesseract.js documentation states v5+ reduced first-time runtime by ~50% and recommends reusing workers. Benchmarks on typical hardware show sub-second to low-second processing for document images. The "warm worker" pattern avoids cold-start overhead. **Validated in testing: avg 661ms processing across 5 labels.**
+**Why we assumed this:** Tesseract.js documentation states v5+ reduced first-time runtime by ~50% and recommends reusing workers. Benchmarks on typical hardware show sub-second to low-second processing for document images. The "warm worker" pattern avoids cold-start overhead. **Validated in testing: ONNX PaddleOCR avg 1-2s, Tesseract fallback when needed. All labels under 5.5s.**
 
 **What we did NOT confirm:**
 - Actual performance on Azure Container Apps' specific resource allocation under load

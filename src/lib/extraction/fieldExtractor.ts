@@ -20,6 +20,7 @@ import type { ExtractedFields, FieldResult } from "@/lib/types";
 import {
   ABV_PATTERN,
   ABV_PATTERN_ALT,
+  ABV_PATTERN_MIN,
   NET_CONTENTS_PATTERN,
   NET_CONTENTS_PATTERN_ALT,
   GOV_WARNING_PATTERN,
@@ -53,12 +54,18 @@ function field(value: string | null, confidence: number): FieldResult {
 // ---------------------------------------------------------------------------
 
 function extractAbv(text: string): FieldResult {
-  // Try the primary pattern first
+  // Try the primary pattern first (most specific)
   let match = text.match(ABV_PATTERN);
 
   // Fall back to alternate pattern ("ALC X% BY VOL")
   if (!match) {
     match = text.match(ABV_PATTERN_ALT);
+  }
+
+  // Minimal fallback: "ALC X%" without vol suffix
+  // (PaddleOCR often splits "BY VOL" to a separate line)
+  if (!match) {
+    match = text.match(ABV_PATTERN_MIN);
   }
 
   if (match) {

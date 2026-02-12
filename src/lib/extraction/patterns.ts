@@ -33,6 +33,10 @@ export const ABV_PATTERN =
 export const ABV_PATTERN_ALT =
   /ALC\.?\s+(\d{1,3}\.?\d*)\s*%\s*(?:BY\s*VOL|ALC[\s./]*VOL)/i;
 
+/** Minimal pattern: "ALC X%" without vol suffix (PaddleOCR splits "BY VOL" to separate line) */
+export const ABV_PATTERN_MIN =
+  /ALC\.?\s*(\d{1,3}\.?\d*)\s*%/i;
+
 /**
  * Matches proof notation: "(90 Proof)", "(80 Proof)", "(90.4 PROOF)", etc.
  */

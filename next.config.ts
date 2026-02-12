@@ -7,9 +7,14 @@ const nextConfig: NextConfig = {
   // Standalone output for Docker deployment (copies minimal files)
   output: "standalone",
 
-  // Tesseract.js + sharp must be resolved from node_modules at runtime,
-  // not bundled by Turbopack (worker threads break otherwise)
-  serverExternalPackages: ["tesseract.js", "sharp"],
+  // Native/binary packages must be resolved from node_modules at runtime,
+  // not bundled by Turbopack (worker threads and ONNX runtime break otherwise)
+  serverExternalPackages: [
+    "tesseract.js",
+    "sharp",
+    "multilingual-purejs-ocr",
+    "onnxruntime-node",
+  ],
 
   // Webpack config for non-Turbopack builds (e.g. production)
   webpack: (config) => {

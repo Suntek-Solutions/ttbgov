@@ -23,7 +23,7 @@ Every feature and architectural decision traces directly to something a stakehol
 **Source:** Sarah Chen -- "If we can't get results back in about 5 seconds, nobody's going to use it."
 
 **What we did:**
-- Chose a persistent container deployment (Azure Container Apps) over serverless to keep Tesseract.js OCR workers warm between requests
+- Chose a persistent container deployment (Azure Container Apps) over serverless to keep OCR engines (ONNX PaddleOCR + Tesseract.js) warm between requests
 - Added image preprocessing (resize, grayscale, contrast) to reduce the work the OCR engine has to do
 - Target: under 3 seconds server-side processing for a single label
 
@@ -52,7 +52,7 @@ Every feature and architectural decision traces directly to something a stakehol
 **Source:** Marcus Williams -- "Our network blocks outbound traffic to a lot of domains... half their features didn't work because our firewall blocked connections to their ML endpoints."
 
 **What we did:**
-- Chose Tesseract.js, which runs entirely on the app server
+- Chose dual local OCR: ONNX PaddleOCR (PP-OCRv4, primary) + Tesseract.js (fallback), both running entirely on the app server
 - Zero outbound API calls for core OCR/verification functionality
 - The app works behind any firewall, on any network
 
@@ -90,7 +90,8 @@ Every feature and architectural decision traces directly to something a stakehol
 **Source:** Jenny Park -- "Labels that are photographed at weird angles, or the lighting is bad, or there's glare on the bottle."
 
 **What we did:**
-- **Multi-pass OCR pipeline** -- three preprocessing strategies, each targeting a different class of label:
+- **Primary: ONNX PaddleOCR** (PP-OCRv4 via multilingual-purejs-ocr) -- runs on the raw image with built-in paragraph grouping. Dramatically better on dark backgrounds, decorative fonts, and complex layouts than Tesseract alone.
+- **Fallback: Tesseract.js multi-pass** -- three preprocessing strategies, each targeting a different class of label:
   1. **Normal pass** (always): resize 1200px + grayscale + normalize + sharpen -- standard dark-text-on-light labels
   2. **High-contrast pass** (if fields missing): binary thresholding instead of normalize -- recovers large decorative text
   3. **Color-inverted pass** (for dark backgrounds): negate at 2000px + grayscale + normalize -- converts light-on-dark labels to readable text
@@ -99,7 +100,7 @@ Every feature and architectural decision traces directly to something a stakehol
 - **Expanded extraction patterns** -- regex patterns tested against real COLA labels (not just generated ones): "ALC X% BY VOL", "IMPORTED BY:", "FL.OZ", "PRODUCT OF" across line breaks
 - Graceful error messaging when OCR confidence is too low to produce reliable results
 
-**Results:** 7/7 fields detected on our best real COLA label (Filadoro Italian red wine). Generated labels now achieve near-perfect extraction including brand names previously flagged as unreadable.
+**Results:** 7/7 fields detected on our best real COLA label (Filadoro wine). Dark-background labels like Corte Adagio and Casamigos now readable via ONNX PaddleOCR. Monkey 47 improved from 1/7 to 3/7 fields.
 
 ---
 
@@ -107,7 +108,7 @@ Every feature and architectural decision traces directly to something a stakehol
 
 The spec encourages creating test labels and notes that AI image generation tools work well for this. We went further and sourced labels from three places to test against realistic conditions:
 
-1. **TTB Public COLA Registry** -- Real approved label images downloaded from TTB's free public database (https://www.ttbonline.gov/colasonline/publicSearchColasBasic.do). No login required. These test against genuine label layouts, fonts, and formatting that Tesseract will encounter in production.
+1. **TTB Public COLA Registry** -- Real approved label images downloaded from TTB's free public database (https://www.ttbonline.gov/colasonline/publicSearchColasBasic.do). No login required. These test against genuine label layouts, fonts, and formatting that our OCR engines will encounter in production.
 
 2. **AI-generated labels** -- Controlled test cases with specific pass/fail conditions: compliant label (all pass), wrong ABV (fail), title-case warning instead of all-caps (fail), brand name case mismatch (pass with fuzzy match), missing warning (flag). These prove each verification feature works correctly.
 
@@ -124,7 +125,8 @@ All test labels are in `public/test-labels/` organized by source (`real/`, `gene
 | Next.js | 16.1.6 | Full-stack framework (React UI + API routes) |
 | React | 19.2.3 | UI rendering |
 | TypeScript | 5.x | Type safety across the entire codebase |
-| Tesseract.js | 7.0.0 | Local OCR engine (LSTM neural network) |
+| Tesseract.js | 7.0.0 | Fallback OCR engine (LSTM neural network) |
+| multilingual-purejs-ocr | latest | Primary OCR engine (ONNX PaddleOCR PP-OCRv4, local) |
 | sharp | 0.34.5 | Image preprocessing (native Node.js) |
 | string-similarity-js | 2.1.4 | Fuzzy string comparison |
 | Tailwind CSS | 4.x | Utility-first styling |
@@ -140,7 +142,7 @@ Key assumptions made during development (full list in `docs/considerations/assum
 2. **Application data is entered manually** via form -- no COLA integration
 3. **There is one standard government warning text** (Alcoholic Beverage Labeling Act of 1988)
 4. **The 5-second target is end-to-end** from upload arrival to results display
-5. **OCR accuracy with preprocessing is sufficient** for well-photographed labels
+5. **OCR accuracy with dual-engine approach (ONNX PaddleOCR + Tesseract.js) is sufficient** for well-photographed labels
 
 ---
 
@@ -148,7 +150,7 @@ Key assumptions made during development (full list in `docs/considerations/assum
 
 | Decision | Trade-off | Why we accepted it |
 |---|---|---|
-| Tesseract.js over cloud AI | Lower accuracy on complex labels (mitigated by multi-pass OCR) | No cloud dependency, works behind firewalls, meets the constraint Marcus described |
+| Dual local OCR (ONNX PaddleOCR + Tesseract.js) over cloud AI | Lower accuracy on very complex layouts (mitigated by dual-engine + multi-pass) | No cloud dependency, works behind firewalls, meets the constraint Marcus described |
 | Fuzzy matching over exact matching for text fields | Could allow false positives on genuinely different names | Dave's example showed exact matching produces false negatives that are worse for workflow |
 | No database or persistent storage | Results are not saved between sessions | Marcus said "don't do anything crazy" -- prototype scope, no data retention needed |
 | No PDF label support | Some real labels may arrive as PDFs | Spec shows image-based labels; PDF adds complexity for an edge case |
@@ -163,7 +165,7 @@ This is a prototype. A production deployment at TTB would require:
 
 - **Azure hosting** on FedRAMP-certified infrastructure (prototype already deployed to Azure Container Apps, consistent with TTB's 2019 migration)
 - **COLA integration** to pull application data directly instead of manual entry
-- **Azure AI Document Intelligence** for higher-accuracy OCR (once firewall rules are configured)
+- **Azure AI Document Intelligence** as optional cloud OCR upgrade (current dual-engine already achieves high accuracy)
 - **User authentication and RBAC** for agent accounts
 - **Audit logging** per federal document retention policies
 - **Section 508 accessibility compliance** audit

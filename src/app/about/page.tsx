@@ -37,9 +37,9 @@ export default function AboutPage() {
             <CardTitle className="text-base">AI Extracts Text</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-gray-600">
-            The AI runs a multi-pass OCR pipeline: normal preprocessing for
-            standard labels, high-contrast thresholding for decorative fonts,
-            and color inversion for dark-background labels. Seven standard
+            The AI uses dual OCR engines: ONNX PaddleOCR (primary) for high
+            accuracy on complex labels, plus Tesseract.js multi-pass fallback.
+            Both run locally with zero cloud APIs. Seven standard
             fields are identified automatically and displayed with confidence
             scores so you can see what the AI found.
           </CardContent>
@@ -165,19 +165,22 @@ export default function AboutPage() {
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-gray-600">
           <p>
-            <strong>OCR Engine:</strong> Tesseract.js (LSTM neural network) runs
-            entirely on the server. No data is sent to external cloud APIs -- all
-            processing is local, which means this tool works behind any firewall.
+            <strong>OCR Engines:</strong> Dual local engines -- ONNX PaddleOCR
+            PP-OCRv4 (primary, via multilingual-purejs-ocr) handles most labels
+            with high accuracy. Tesseract.js LSTM (fallback) provides multi-pass
+            preprocessing for edge cases. Both run entirely on the server with
+            zero external API calls. This means the tool works behind any firewall.
           </p>
           <p>
-            <strong>Multi-Pass Image Preprocessing:</strong> Each label runs through
-            up to three OCR strategies, selected automatically based on what
-            the first pass finds. Pass 1 uses standard preprocessing (resize,
-            grayscale, normalize, sharpen). If fields are missing, Pass 2 uses
-            binary thresholding to recover large decorative text. Pass 3 uses
-            color inversion at higher resolution for light-on-dark labels. Only
-            the passes needed are run, keeping processing under the 5-second
-            target.
+            <strong>Dual OCR Engine Strategy:</strong> Primary: ONNX PaddleOCR
+            processes raw images with built-in paragraph grouping. Fallback:
+            Tesseract.js multi-pass runs up to three preprocessing strategies,
+            selected automatically based on what the first pass finds. Pass 1
+            uses standard preprocessing (resize, grayscale, normalize, sharpen).
+            If fields are missing, Pass 2 uses binary thresholding to recover
+            large decorative text. Pass 3 uses color inversion at higher
+            resolution for light-on-dark labels. Only the passes needed are run,
+            keeping processing under the 5-second target.
           </p>
           <p>
             <strong>Fuzzy Matching:</strong> Text fields like brand name and
@@ -198,7 +201,8 @@ export default function AboutPage() {
             end-to-end. The OCR worker pool (2 persistent workers) stays warm
             between requests for sub-second processing after initial load.
             Image preprocessing adds ~150ms but significantly improves OCR
-            accuracy.
+            accuracy. ONNX PaddleOCR typically completes in 0.5-2s. Tesseract.js
+            fallback adds 1-3s when needed.
           </p>
           <p>
             <strong>Batch Processing:</strong> The batch upload page processes
