@@ -246,4 +246,13 @@ Ran comprehensive validation after all documentation updates:
 
 Detailed results documented in `docs/TEST_VALIDATION_SUMMARY.md`. This closes the loop on the test plan and validates that all system changes (dual OCR, universal extraction, boundary documentation) work correctly in practice.
 
+**UX Improvement: Demo Label Selection Feedback:**
+Fixed confusing demo label selection behavior:
+- Clicking demo labels now shows immediate visual feedback (loading spinner, green highlight)
+- Selected label preview appears instantly in upload area (same as drag/drop)
+- Auto-scrolls to upload area after selection
+- Added hover scale effect for better interactivity
+
+Technical: LabelUploader now syncs with external preview state, ExampleLabelPicker tracks per-label loading state.
+
 ---
