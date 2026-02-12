@@ -291,7 +291,7 @@ flowchart LR
 
 ## Production Extension Path: OCR Adapter Architecture
 
-**Critical Note:** The current architecture uses 100% local OCR (ONNX PaddleOCR + Tesseract.js) as a deliberate choice to handle firewall restrictions and eliminate external dependencies. However, the system is designed to support a pluggable OCR adapter layer for production environments with outbound network access.
+**Critical Note:** The current architecture uses 100% local OCR (ONNX PaddleOCR + Tesseract.js) as a deliberate choice for this take-home project to demonstrate OCR fundamentals without requiring API keys, billing, or network setup. For production deployment, the recommended approach is a pluggable OCR adapter layer that **attempts cloud services first** (Azure Document Intelligence, Google Vision, AWS Textract - typically 10-100x faster and more accurate), then automatically falls back to local engines when network is restricted.
 
 ### Proposed OCR Adapter Pattern
 

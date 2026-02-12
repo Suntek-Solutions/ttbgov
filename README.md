@@ -93,6 +93,7 @@ The TTB network blocks outbound traffic to many domains. A previous vendor's clo
 |---|---|
 | How do I set up and run this? | You're here -- see [Quick Start](#quick-start) above |
 | How do I use this tool? | Visit the [How It Works](/about) page in the app -- plain-language walkthrough for all experience levels |
+| What are the OCR test results for all demo labels? | [docs/TEST_RESULTS.md](docs/TEST_RESULTS.md) -- comprehensive results for all 59 test labels with performance stats and notes |
 | Why were these technologies chosen? | [docs/APPROACH.md](docs/APPROACH.md) -- maps every stakeholder interview to a design decision |
 | How does the system work technically? | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) -- system diagrams, data flow, API specs, TypeScript interfaces |
 | What could go wrong and how would you handle it? | [docs/considerations/risks.md](docs/considerations/risks.md) -- 10 risks ranked by severity with pivot strategies |
@@ -202,7 +203,7 @@ docker run -p 3000:3000 ttb-label-verification
 
 This is a prototype. A production deployment at TTB would require:
 
-- **OCR Adapter Architecture** (critical enhancement): If outbound network access is allowed, add an OCR adapter layer with pluggable engines (Azure Document Intelligence, Azure Vision OCR, Google Document AI, AWS Textract). The app would choose the best engine available and automatically fall back to the local dual-engine (ONNX + Tesseract) when blocked by firewalls. **The current 100% local approach was a deliberate architectural choice** to handle firewall restrictions, but the adapter pattern makes cloud OCR a simple plug-in for production.
+- **OCR Adapter Architecture** (critical enhancement): If outbound network access is allowed, add an OCR adapter layer with pluggable cloud engines (Azure Document Intelligence, Azure Vision OCR, Google Document AI, AWS Textract) as the **first-try method**. The app would attempt cloud OCR first (typically 10-100x faster and more accurate than local), then automatically fall back to the current local dual-engine (ONNX + Tesseract) when network is blocked or cloud services are unavailable. **The current 100% local approach was chosen for this take-home project** to demonstrate deep OCR understanding and optimization without requiring API keys, billing setup, or network complexity. The adapter pattern (fully documented in ARCHITECTURE.md) makes cloud OCR a simple plug-in for production.
 - **COLA system integration** for automated application data import
 - **User authentication and RBAC** for agent accounts
 - **Audit logging** and document retention per federal compliance requirements

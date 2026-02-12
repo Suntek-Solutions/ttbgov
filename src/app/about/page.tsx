@@ -270,19 +270,20 @@ export default function AboutPage() {
             <strong className="text-blue-900">
               OCR Adapter Architecture (Critical Enhancement):
             </strong>{' '}
-            If outbound network access is allowed, the app can be extended with
-            an OCR adapter layer supporting pluggable engines (Azure Document
-            Intelligence, Azure Vision OCR, Google Document AI, AWS Textract).
-            The system would automatically choose the best engine available and
-            fall back to the local dual-engine (ONNX + Tesseract) when blocked
-            by firewalls.{' '}
+            In production, the recommended approach is an OCR adapter layer that{' '}
+            <strong>attempts cloud services first</strong> (Azure Document
+            Intelligence, Azure Vision OCR, Google Document AI, AWS Textract -
+            typically 10-100x faster and more accurate), then automatically
+            falls back to the local dual-engine (ONNX + Tesseract) when network
+            is blocked by firewalls.{' '}
             <strong>
-              The current 100% local approach was a deliberate architectural
-              choice
+              The current 100% local approach was chosen for this take-home
+              project
             </strong>{' '}
-            to handle firewall restrictions, but the adapter pattern makes cloud
-            OCR a simple plug-in for production environments with outbound
-            access.
+            to demonstrate deep OCR understanding and optimization without
+            requiring API keys, billing setup, or network complexity. The
+            adapter pattern (documented in ARCHITECTURE.md) makes cloud OCR a
+            simple plug-in for production.
           </p>
           <p>
             <strong>Other Production Requirements:</strong> COLA system
