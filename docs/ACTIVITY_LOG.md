@@ -8,9 +8,10 @@ Development history for the TTB Label Verification App. Maintained throughout th
 
 ## Current Project State
 
-**Phase:** Complete. Universal OCR extraction pipeline with parallel engine optimization, fully documented, ready for submission.
+**Phase:** Complete. Universal OCR extraction pipeline with parallel engine optimization, fully documented, deployed, ready for submission.
 **Live URL:** https://ttb-label-verification.delightfulbeach-49152395.eastus.azurecontainerapps.io
 **Tag:** `v2.0-universal-extraction`
+**Azure Resources:** 2 vCPU / 4GB RAM (Container Apps, Consumption plan)
 
 **Test Results (59 labels, universal extraction, parallel OCR engines):**
 
@@ -18,7 +19,9 @@ Development history for the TTB Label Verification App. Maintained throughout th
 |---|---|
 | Labels tested | 59 (5 generated + 54 real COLA) |
 | Pass rate | 98.3% (58/59) |
-| Avg processing | **2.4s** (25-35% faster with parallel engines) |
+| Avg processing (local) | **2.4s** (parallel engines) |
+| Avg processing (Azure, warm) | **~2s** (2 vCPU / 4GB) |
+| Cold start (Azure) | ~4.2s (engine initialization) |
 | Labels > 10s SLA | 0 |
 | Brand name | 100% |
 | Class/type | 85% |
@@ -29,7 +32,7 @@ Development history for the TTB Label Verification App. Maintained throughout th
 | Producer | 30% |
 | Origin | 22% |
 
-**Performance:** ONNX PaddleOCR + Tesseract.js run in parallel (not sequential) for 25-35% speed improvement with zero accuracy loss.
+**Performance:** ONNX PaddleOCR + Tesseract.js run in parallel (not sequential). Azure upgraded from 1 vCPU/2GB to 2 vCPU/4GB, cutting warm OCR from ~5s to ~2s (60% faster).
 
 **Architecture Decision:** Local-only OCR approach validates OCR fundamentals and optimization expertise. Cloud OCR APIs (Azure Document Intelligence, Google Vision, AWS Textract) documented as first-try production enhancement with local fallback, but deemed out-of-scope for take-home assignment (no API keys, billing, or network complexity required).
 
@@ -358,5 +361,59 @@ This optimization maintains our 100% local OCR approach (ONNX PaddleOCR + Tesser
 - Adding cloud APIs would require API keys, billing setup, and network configuration beyond the scope of a take-home assignment
 
 The parallel engine optimization proves we understand performance tuning and can optimize within architectural constraints, which is more valuable for a technical assessment than adding third-party API calls.
+
+**Session 17 -- Screenshot Capture for Documentation** (2026-02-12 Thursday, ~3:00 PM MST):
+Captured three professional screenshots of the TTB Label Verification app for documentation purposes using Puppeteer automation.
+
+**Screenshots Captured:**
+- `docs/screenshots/01-home.png` - Clean home/upload page (no demo mode)
+- `docs/screenshots/02-extracted.png` - After extracting a label, showing Field-by-Field Comparison
+- `docs/screenshots/03-results.png` - After verification, showing "ALL FIELDS MATCH" banner with stats
+
+**Technical Approach:**
+- Created automated Puppeteer script to navigate app, enable demo mode, select "Compliant Bourbon" example, extract text, turn off demo mode for clean UI, and capture verification results
+- Used fixed wait times (15-30 seconds) to accommodate OCR processing time
+- Screenshots taken at 1280x1024 viewport resolution for professional documentation quality
+- All screenshots exclude debug console for clean, production-ready appearance
+
+---
+
+### Session 18 -- Final Deployment: Build Fixes, UI Polish & Azure Performance Upgrade
+
+**2026-02-12 (Thursday, ~3:30 PM MST)**
+
+**Azure ACR Build Fix:**
+The Azure CLI on Windows crashed when streaming Docker build logs containing Unicode characters (Next.js `▲` = U+25B2). After multiple attempts (disabling telemetry, `--no-logs`, output redirection), resolved by piping build output through `tr -cd '\11\12\15\40-\176'` in the Dockerfile to strip non-ASCII characters before they reach the Azure CLI log stream.
+
+**TypeScript Build Fix:**
+Production `next build` (strict mode) caught `'best' is possibly null'` in `engine.ts` line 307. Added null safety guard with `createEmptyFields()` helper and moved the guard before all `best` references. Eliminated all non-null assertions (`best!`) in favor of proper narrowing.
+
+**UI Polish:**
+- Verification stats ("7/7 pass -- 3ms") moved to separate line below "ALL FIELDS MATCH" / "VERIFICATION FAILED"
+- Retook all three README screenshots with latest layout (no debug console, clean crops)
+
+**Azure Performance Upgrade:**
+OCR on the 1 vCPU / 2GB container was consistently ~5s warm (ONNX PaddleOCR is CPU-bound). Upgraded to **2 vCPU / 4GB RAM**:
+
+| Label | 1 vCPU (before) | 2 vCPU (after) | Improvement |
+|---|---|---|---|
+| Compliant Bourbon (cold) | 9004ms | **4245ms** | 53% faster |
+| Wrong Warning Case (warm) | 4499ms | **1958ms** | 56% faster |
+| Wrong ABV (warm) | 4885ms | **2077ms** | 57% faster |
+| Brand Case Mismatch (warm) | -- | **1543ms** | -- |
+
+Warm requests now consistently **under 2.5 seconds** on Azure. Cold start (engine init) dropped from 9s to 4.2s.
+
+**Deployment Details:**
+- Image: `ttblabelacr.azurecr.io/ttb-label-verification:latest`
+- Digest: `sha256:e0717ba165175cabc27b340637ab88f6acf8af58b3280135953dd8440c02edf4`
+- Revision: `ttb-label-verification--0000006` (2 vCPU / 4GB RAM)
+- Status: ✅ Live at https://ttb-label-verification.delightfulbeach-49152395.eastus.azurecontainerapps.io
+
+**Commits:**
+1. `ac33b11` -- Final polish: clean screenshots, verification result stats on separate line
+2. `520f27d` -- Fix Azure CLI build log Unicode crash: strip non-ASCII from build output via tr
+3. `32a088b` -- Fix TypeScript null check in engine.ts, fix Azure build log Unicode stripping via tr
+4. `c65076f` -- Update README screenshots with latest UI layout (stats on new line)
 
 ---

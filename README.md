@@ -65,7 +65,7 @@ A compliance agent reviews ~150,000 label applications per year. Each review inv
 - **Fuzzy matching** -- handles case and punctuation differences ("STONE'S THROW" vs "Stone's Throw")
 - **Government warning validation** -- exact text match with all-caps prefix check per TTB requirements
 - **Image preprocessing** -- grayscale, contrast enhancement, sharpening for imperfect photos
-- **Sub-5-second response** -- warm OCR worker pool keeps processing fast after initial load
+- **Sub-3-second response** -- parallel dual-engine OCR on 2 vCPU keeps warm processing under 2.5 seconds
 
 ---
 
@@ -179,7 +179,7 @@ The COLA registry images are real-world data from TTB's public database, but the
 
 ### Azure Container Apps (primary)
 
-Deployed to Azure Container Apps, consistent with TTB's existing Azure infrastructure:
+Deployed to Azure Container Apps (2 vCPU / 4GB RAM), consistent with TTB's existing Azure infrastructure:
 
 ```bash
 az login
@@ -187,6 +187,8 @@ az login
 ```
 
 All configuration is driven by environment variables with sensible defaults. See the script for details.
+
+**Current deployment:** 2 vCPU / 4GB RAM, min 1 replica always-on. Warm OCR processing averages ~2 seconds per label.
 
 ### Docker (run anywhere)
 
