@@ -13,6 +13,9 @@ RUN npm ci --production=false
 FROM node:20-slim AS builder
 WORKDIR /app
 
+# Disable Next.js telemetry during build to avoid Unicode characters in output
+ENV NEXT_TELEMETRY_DISABLED=1
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
