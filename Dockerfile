@@ -20,8 +20,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Build the Next.js app
-# Pipe through sed to strip non-ASCII characters that crash Azure CLI log streaming
-RUN npm run build 2>&1 | sed 's/[^[:print:]\t]//g'
+# Redirect output to file to prevent Unicode chars (▲) from crashing Azure CLI log streaming
+RUN npm run build > /tmp/build.log 2>&1 || (cat /tmp/build.log && exit 1)
 
 # --- Stage 3: Production ---
 FROM node:20-slim AS runner
