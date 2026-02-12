@@ -151,7 +151,7 @@ Testing infrastructure:
 
 ### Session 10 -- Multi-Pass OCR Engine & ONNX PaddleOCR
 
-**2026-02-11 (Tuesday, multi-session)**
+**2026-02-11 (Wednesday, multi-session)**
 
 Multi-pass OCR engine:
 - Discovered Tesseract.js PSM initialization bug: workers skip large decorative text unless `tessedit_pageseg_mode: "3"` is set explicitly. This single fix recovered brand names.
@@ -215,7 +215,7 @@ This documents the path from current 100% local OCR (firewall-friendly) to produ
 
 ### Session 14 -- Final Documentation Polish
 
-**2026-02-12 (Friday, ~3:00 AM MST)**
+**2026-02-12 (Thursday, ~3:00 AM MST)**
 
 Final proof-read and polish pass:
 - Fixed typo: "Tesseract.js 7" → "Tesseract.js" (no version 7 exists)
