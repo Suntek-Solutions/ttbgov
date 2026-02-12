@@ -6,13 +6,19 @@ import Image from "next/image";
 interface LabelUploaderProps {
   onImageSelected: (file: File) => void;
   isProcessing?: boolean;
+  externalPreview?: string | null;
+  externalFileName?: string | null;
 }
 
-export function LabelUploader({ onImageSelected, isProcessing }: LabelUploaderProps) {
+export function LabelUploader({ onImageSelected, isProcessing, externalPreview, externalFileName }: LabelUploaderProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  
+  // Use external preview/filename if provided, otherwise use internal state
+  const displayPreview = externalPreview || preview;
+  const displayFileName = externalFileName || fileName;
 
   const handleFile = useCallback(
     (file: File) => {
@@ -75,7 +81,7 @@ export function LabelUploader({ onImageSelected, isProcessing }: LabelUploaderPr
         className={`relative flex min-h-[200px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-colors ${
           isDragOver
             ? "border-blue-500 bg-blue-50"
-            : preview
+            : displayPreview
             ? "border-green-300 bg-green-50"
             : fileError
             ? "border-red-300 bg-red-50/30"
@@ -89,17 +95,18 @@ export function LabelUploader({ onImageSelected, isProcessing }: LabelUploaderPr
           className="absolute inset-0 cursor-pointer opacity-0"
           disabled={isProcessing}
         />
-        {preview ? (
+        {displayPreview ? (
           <div className="flex flex-col items-center gap-3 p-4">
             <Image
-              src={preview}
+              src={displayPreview}
               alt="Label preview"
               width={300}
               height={200}
               className="max-h-[180px] w-auto rounded-lg object-contain shadow-sm"
+              unoptimized={!!externalPreview}
             />
             <p className="text-sm text-gray-600">
-              {fileName} -- click or drop to replace
+              {displayFileName} -- click or drop to replace
             </p>
           </div>
         ) : (

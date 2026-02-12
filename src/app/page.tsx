@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -119,6 +119,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [demoPrefill, setDemoPrefill] = useState<ApplicationData | null>(null);
   const { demoMode, addLog } = useDemo();
+  const uploaderRef = useRef<HTMLDivElement>(null);
 
   const handleImageSelected = (file: File, prefillData?: ApplicationData, rawUrl?: string) => {
     setSelectedFile(file);
@@ -135,6 +136,10 @@ export default function Home() {
       setDemoPrefill(prefillData);
       if (demoMode) addLog("Application data pre-filled from demo example");
     }
+    // Scroll to uploader to show the selected label
+    setTimeout(() => {
+      uploaderRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 100);
   };
 
   const handleExtract = async () => {
@@ -273,7 +278,7 @@ export default function Home() {
 
       {/* Step 1: Upload and Extract */}
       {step === "upload" && (
-        <Card>
+        <Card ref={uploaderRef}>
           <CardHeader>
             <CardTitle className="text-base">
               Step 1: Upload Label Image
@@ -286,6 +291,8 @@ export default function Home() {
           <LabelUploader
             onImageSelected={(file) => handleImageSelected(file)}
             isProcessing={isExtracting}
+            externalPreview={imagePreview}
+            externalFileName={selectedFile?.name || null}
           />
             <Button
               onClick={handleExtract}

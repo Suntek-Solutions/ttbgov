@@ -25,6 +25,7 @@ export function ExampleLabelPicker({ onSelect, mode = "single", onBatchSelect }:
   const [loading, setLoading] = useState(true);
   const [selectedBatch, setSelectedBatch] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<"scenarios" | "real">("scenarios");
+  const [loadingLabel, setLoadingLabel] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/test-labels/demo-labels.json")
@@ -37,11 +38,17 @@ export function ExampleLabelPicker({ onSelect, mode = "single", onBatchSelect }:
   }, []);
 
   const handleSingleSelect = async (label: DemoLabel) => {
-    const response = await fetch(label.file);
-    const blob = await response.blob();
-    const filename = label.file.split("/").pop() ?? "label.png";
-    const file = new File([blob], filename, { type: "image/png" });
-    onSelect(file, label.applicationData, label.file);
+    setLoadingLabel(label.id);
+    try {
+      const response = await fetch(label.file);
+      const blob = await response.blob();
+      const filename = label.file.split("/").pop() ?? "label.png";
+      const file = new File([blob], filename, { type: "image/png" });
+      onSelect(file, label.applicationData, label.file);
+    } finally {
+      // Keep the loading state briefly to show feedback
+      setTimeout(() => setLoadingLabel(null), 300);
+    }
   };
 
   const handleBatchLoadAll = async () => {
@@ -161,25 +168,42 @@ export function ExampleLabelPicker({ onSelect, mode = "single", onBatchSelect }:
 
       <div className="max-h-[180px] overflow-y-auto rounded-md border border-amber-200 bg-white">
         <div className="grid grid-cols-5 gap-1.5 p-2">
-          {(activeTab === "scenarios" ? generated : real).map((label) => (
-            <button
-              key={label.id}
-              onClick={() => handleSingleSelect(label)}
-              className="group rounded-lg border border-gray-150 bg-white p-1.5 text-left transition-colors hover:border-amber-400 hover:bg-amber-50"
-            >
-              <Image
-                src={label.file}
-                alt={label.name}
-                width={240}
-                height={160}
-                unoptimized
-                className="mb-1 h-[40px] w-full rounded object-contain"
-              />
-              <p className="text-[10px] font-medium text-gray-800 truncate">
-                {label.name}
-              </p>
-            </button>
-          ))}
+          {(activeTab === "scenarios" ? generated : real).map((label) => {
+            const isLoading = loadingLabel === label.id;
+            return (
+              <button
+                key={label.id}
+                onClick={() => handleSingleSelect(label)}
+                disabled={isLoading}
+                className={`group rounded-lg border p-1.5 text-left transition-all ${
+                  isLoading
+                    ? "border-green-400 bg-green-100 scale-95"
+                    : "border-gray-150 bg-white hover:border-amber-400 hover:bg-amber-50 hover:scale-105"
+                }`}
+              >
+                <div className="relative">
+                  <Image
+                    src={label.file}
+                    alt={label.name}
+                    width={240}
+                    height={160}
+                    unoptimized
+                    className={`mb-1 h-[40px] w-full rounded object-contain transition-opacity ${
+                      isLoading ? "opacity-50" : ""
+                    }`}
+                  />
+                  {isLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-green-600 border-t-transparent"></div>
+                    </div>
+                  )}
+                </div>
+                <p className="text-[10px] font-medium text-gray-800 truncate">
+                  {label.name}
+                </p>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
