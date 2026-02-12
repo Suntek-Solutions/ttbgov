@@ -29,6 +29,26 @@ import { extractFields } from "@/lib/extraction/fieldExtractor";
 import { recognizeWithOnnx, isOnnxAvailable } from "@/lib/ocr/onnx";
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const EMPTY_FIELD = { value: null, confidence: 0 };
+
+/** Create an empty ExtractedFields object (used when all OCR engines fail) */
+function createEmptyFields(): ExtractedFields {
+  return {
+    brandName: { ...EMPTY_FIELD },
+    classType: { ...EMPTY_FIELD },
+    alcoholContent: { ...EMPTY_FIELD },
+    netContents: { ...EMPTY_FIELD },
+    governmentWarning: { ...EMPTY_FIELD },
+    producerInfo: { ...EMPTY_FIELD },
+    countryOfOrigin: { ...EMPTY_FIELD },
+    rawText: "",
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Configuration
 // ---------------------------------------------------------------------------
 
@@ -275,8 +295,14 @@ export async function recognizeWithFallback(
     rawTexts.push(tessOcr.text);
   }
 
+  // Safety: if both ONNX and Tesseract failed, return empty fields
+  if (!best) {
+    console.error("[OCR Engine] Both ONNX and Tesseract failed. Returning empty fields.");
+    return { fields: createEmptyFields(), ocrResult: bestOcrResult };
+  }
+
   // Check merged results
-  const currentCount = countFields(best!);
+  const currentCount = countFields(best);
   const parallelTime = Math.round(performance.now() - start);
   console.log(`[OCR Engine] Parallel merge complete: ${currentCount}/${TOTAL_FIELDS} fields in ${parallelTime}ms`);
 
@@ -284,19 +310,19 @@ export async function recognizeWithFallback(
   // Skip alt pass if we have good coverage (6-7 fields) OR
   // if government warning is already correct (all caps prefix check)
   if (currentCount >= 6) {
-    best!.rawText = rawTexts.join("\n\n---\n\n");
+    best.rawText = rawTexts.join("\n\n---\n\n");
     console.log(`[OCR Engine] Strong coverage (${currentCount}/${TOTAL_FIELDS}). Done in ${parallelTime}ms`);
-    return { fields: best!, ocrResult: bestOcrResult };
+    return { fields: best, ocrResult: bestOcrResult };
   }
 
   // Also skip if we have 5 fields including a correctly-formatted government warning
-  if (currentCount >= 5 && best!.governmentWarning.value) {
-    const warningText = best!.governmentWarning.value;
+  if (currentCount >= 5 && best.governmentWarning.value) {
+    const warningText = best.governmentWarning.value;
     const hasCorrectPrefix = /^GOVERNMENT WARNING:/i.test(warningText);
-    if (hasCorrectPrefix && best!.governmentWarning.confidence >= 0.7) {
-      best!.rawText = rawTexts.join("\n\n---\n\n");
+    if (hasCorrectPrefix && best.governmentWarning.confidence >= 0.7) {
+      best.rawText = rawTexts.join("\n\n---\n\n");
       console.log(`[OCR Engine] Good coverage with valid warning (${currentCount}/${TOTAL_FIELDS}). Done in ${parallelTime}ms`);
-      return { fields: best!, ocrResult: bestOcrResult };
+      return { fields: best, ocrResult: bestOcrResult };
     }
   }
 
