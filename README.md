@@ -136,6 +136,8 @@ ttbgov/
 
 ## Trade-offs & Limitations
 
+### Architectural Trade-offs
+
 | Decision | Trade-off | Why we accepted it |
 |---|---|---|
 | Dual local OCR over cloud AI | Lower accuracy on very complex layouts (mitigated by dual-engine + multi-pass) | No cloud dependency, works behind firewalls, meets the constraint Marcus described |
@@ -144,6 +146,31 @@ ttbgov/
 | No COLA integration | Agent enters data manually | Standalone prototype per spec -- COLA integration is a production concern |
 
 See [docs/APPROACH.md](docs/APPROACH.md) for the complete trade-off analysis.
+
+### Known Limitations (Boundary Cases)
+
+This system was tested against 59 diverse labels (5 AI-generated + 54 real COLA registry images) to understand boundary cases:
+
+**Image Quality Impacts Accuracy:**
+- **High-quality scans/photos** (AI-generated test labels): 6.2/7 fields avg (89%)
+- **Best real COLA labels** (wine bottles, clear photos): 7/7 fields
+- **Typical COLA registry images** (compressed, variable quality): 3.9/7 fields avg (56%)
+
+The COLA registry images are real-world data from TTB's public database, but they're optimized for human review (small file sizes, variable lighting, angled photos). OCR performs best on:
+- Flat, well-lit scans or straight-on photos
+- High contrast (dark text on light backgrounds)
+- Minimal glare or bottle curvature
+- Resolution > 800px width
+
+**What still challenges OCR:**
+- Vertical or curved text following bottle contours
+- Highly decorative fonts (Gothic, script, heavy embellishment)
+- Text printed on dark/textured backgrounds
+- Very small font sizes (< 8pt equivalent)
+- Graphical logos without readable text
+- Severely compressed or low-resolution images
+
+**Production Note:** The OCR adapter architecture (see "What Would Change for Production") would add cloud OCR engines that handle these edge cases better, while maintaining local fallback for firewall-restricted environments.
 
 ---
 
