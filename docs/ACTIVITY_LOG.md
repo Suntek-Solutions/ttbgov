@@ -285,4 +285,32 @@ Deployed latest version to Azure Container Apps including all improvements since
 - ✅ Debug console: Confirms image selection and data pre-fill
 - ✅ All UX improvements from local testing now live in production
 
+**Session 15 -- UI Layout Improvements & Deployment** (2026-02-12 Thursday, ~1:15 PM MST):
+Improved verification UI layout by moving button and results to right column.
+
+**Layout Changes:**
+- Moved Re-Verify button from full-width below table to right column under label image
+- Moved verification result banner to right column under button
+- Left column now exclusively shows field-by-field comparison table
+- Right column stacks: label image → verify button → result banner
+
+**Documentation:**
+- Created/updated README screenshots to reflect new layout
+- `01-home.png`: Clean upload screen
+- `02-extracted.png`: Field comparison with new right column layout
+- `03-results.png`: Verification results showing button and banner in right column
+
+**Deployment:**
+- Image: `ttblabelacr.azurecr.io/ttb-label-verification:latest`
+- Build time: ~3.8 minutes
+- Digest: `sha256:c5ba81685120b2a9cfccb5b8cf4d1f81c3c3019a788c69d4b24111e9c8683fc8`
+- Revision: `ttb-label-verification--0000003`
+- Status: ✅ Live at https://ttb-label-verification.delightfulbeach-49152395.eastus.azurecontainerapps.io
+
+**Verification:**
+- ✅ New layout working correctly on live deployment
+- ✅ Button and result banner properly positioned in right column
+- ✅ Field comparison table clean and uncluttered in left column
+- ✅ Better visual hierarchy and more prominent call-to-action
+
 ---
