@@ -364,7 +364,8 @@ export default function Home() {
                   }`}>
                     {verifyResult.overall === "pass" ? "ALL FIELDS MATCH" : "VERIFICATION FAILED"}
                   </span>
-                  <span className="ml-2 text-sm text-gray-500">
+                  <br />
+                  <span className="text-sm text-gray-500">
                     ({verifyResult.results?.filter(r => r.match).length}/{verifyResult.results?.length} pass -- {verifyResult.processingTimeMs}ms)
                   </span>
                 </div>
