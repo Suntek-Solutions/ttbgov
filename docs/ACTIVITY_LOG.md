@@ -264,4 +264,18 @@ Created comprehensive `scripts/README.md` documenting all 9 files:
 
 All scripts now documented with purpose, status, usage, and recommendations. Added `.gitignore` rules for script output files.
 
+**Azure Redeployment with Latest UX Improvements:**
+Deployed latest version to Azure Container Apps including all improvements since Session 13:
+- Demo label selection UX (click feedback, auto-scroll, immediate preview)
+- Known Limitations documentation (README + About page)
+- Test validation summary (97/98 tests passed)
+- Scripts directory documentation
+- Day-of-week fixes
+
+**Deployment:**
+- Image: `ttblabelacr.azurecr.io/ttb-label-verification:latest`
+- Build time: ~3.5 minutes
+- Digest: `sha256:70921bedc22e8eaaee1f324c04445430490fc3f6bae97620197087ce838c1070`
+- Status: ✅ Live at https://ttb-label-verification.delightfulbeach-49152395.eastus.azurecontainerapps.io
+
 ---
