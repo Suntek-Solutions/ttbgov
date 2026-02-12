@@ -50,7 +50,7 @@
   },
   {
     "id": "brand-case-mismatch",
-    "name": "Brand Case Mismatch",
+    "name": "Missing Surgeon General",
     "description": "\"OLD TOM\" on label vs \"Old Tom\" in form -- fuzzy match test",
     "category": "generated",
     "file": "/test-labels/generated/brand-case-mismatch.png",
