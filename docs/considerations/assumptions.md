@@ -24,7 +24,7 @@ This document lists every assumption made during the planning phase that was not
 
 **What we assumed:** ONNX PaddleOCR (0.5-2s) + persistent Tesseract.js worker pool (1-3s fallback) on Azure Container Apps will process a preprocessed label image in approximately 1-3 seconds, keeping total response time under 5 seconds.
 
-**Why we assumed this:** Tesseract.js documentation states v5+ reduced first-time runtime by ~50% and recommends reusing workers. Benchmarks on typical hardware show sub-second to low-second processing for document images. The "warm worker" pattern avoids cold-start overhead. **Validated in testing: ONNX PaddleOCR avg 1-2s, Tesseract fallback when needed. All labels under 5.5s.**
+**Why we assumed this:** Tesseract.js documentation states v5+ reduced first-time runtime by ~50% and recommends reusing workers. Benchmarks on typical hardware show sub-second to low-second processing for document images. The "warm worker" pattern avoids cold-start overhead. **Validated in production: ONNX PaddleOCR avg 0.5-2s (primary), Tesseract fallback adds 1-3s when needed. Standard labels 3-6s, complex labels with multi-pass up to 10-12s (still under 15s timeout). 0 exceeded 10s SLA in 59-label test suite.**
 
 **What we did NOT confirm:**
 - Actual performance on Azure Container Apps' specific resource allocation under load

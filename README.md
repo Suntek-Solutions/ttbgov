@@ -31,7 +31,7 @@ Built as a standalone prototype for the Alcohol and Tobacco Tax and Trade Bureau
 ### Local Setup
 
 ```bash
-git clone https://github.com/Suntek-Enterprises/ttbgov.git
+git clone https://github.com/Suntek-Solutions/ttbgov.git
 cd ttbgov
 npm install
 npm run dev
@@ -75,7 +75,7 @@ A compliance agent reviews ~150,000 label applications per year. Each review inv
 |---|---|---|
 | Framework | Next.js 16 (TypeScript) | Single codebase, single deployment, type-safe |
 | UI | React 19 + Tailwind CSS 4 + shadcn/ui | Accessible, clean, responsive -- usable by non-technical staff |
-| OCR | ONNX PaddleOCR (primary) + Tesseract.js 7 (conditional fallback) | Dual local OCR: PaddleOCR PP-OCRv4 for high accuracy, Tesseract.js conditional fallback. Max 3 passes. Zero cloud dependency |
+| OCR | ONNX PaddleOCR (primary) + Tesseract.js (conditional fallback) | Dual local OCR: PaddleOCR PP-OCRv4 for high accuracy, Tesseract.js conditional fallback. Max 3 passes. Zero cloud dependency |
 | Pattern Extraction | Universal regex + fuzzy matching | TTB-standard patterns for ABV, net contents, warning, producer, origin, class/type. No hardcoded country lists. |
 | Image Processing | sharp | Preprocessing pipeline (1200px grayscale + normalize + sharpen) with threshold and inversion variants |
 | Fuzzy Matching | string-similarity-js | Case/punctuation-normalized comparison with confidence scores |
