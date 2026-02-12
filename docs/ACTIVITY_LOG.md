@@ -462,3 +462,35 @@ Full documentation alignment (58 issues fixed across 10 files):
 **Files changed:** `onnx.ts` (new), `engine.ts`, `preprocessor.ts`, `fieldExtractor.ts`, `patterns.ts`, `next.config.ts`, `package.json`, `README.md`, `APPROACH.md`, `ARCHITECTURE.md`, `about/page.tsx`, `risks.md`, `assumptions.md`, `rationale.md`, `ACTIVITY_LOG.md`
 
 **Pending:** Azure redeploy with dual OCR engine (v8)
+
+---
+
+### Session 9: Merge Quality Fix + Dynamic Field Architecture
+
+**Time:** Feb 11, 2026 ~8:00 PM – ~8:15 PM MST (15m)
+**Who:** Scott + AI agent
+
+**What was done:**
+
+Case-sensitive field merge fix:
+- Discovered ONNX PaddleOCR reads "GOVERNMENT wARNING:" (lowercase w) which fails the all-caps validation
+- Root cause: `mergeFields` used overall OCR confidence (ONNX 96% vs Tesseract 95%), keeping ONNX's typo
+- Fix: added `CASE_SENSITIVE_FIELDS` set -- for these fields, Tesseract's version is preferred if within 20% confidence of ONNX
+- Ensures correct "GOVERNMENT WARNING:" (Tesseract) always wins over "wARNING" (ONNX)
+
+Dynamic field architecture:
+- Removed all hardcoded "7" references from engine.ts
+- Added `FIELD_KEYS` array as single source of truth for extractable fields
+- Added `TOTAL_FIELDS = FIELD_KEYS.length` used in all thresholds and logs
+- System now adapts automatically when new fields are added (e.g., vintage year, sulfite declaration, age statement for beverage-type-specific requirements)
+
+Comprehensive testing:
+- API sweep: 6 labels, all gov warning prefixes "GOVERNMENT WARNING:" (correct caps) ✓
+- Batch API: 3 labels processed, all warnings correct ✓
+- Verify API: Compliant label 7/7 PASS including warning at 100% match ✓
+- All 39 unit tests pass ✓
+- All labels under 5.5s SLA ✓
+
+**Files changed:** `engine.ts`, `ACTIVITY_LOG.md`
+
+**Pending:** Azure redeploy with dual OCR engine (v8)

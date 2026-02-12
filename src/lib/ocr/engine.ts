@@ -139,29 +139,60 @@ export async function recognizeImage(imageBuffer: Buffer): Promise<OcrResult> {
   };
 }
 
+/** All extractable field keys (dynamic -- add new fields here as TTB requirements expand) */
+const FIELD_KEYS: (keyof Omit<ExtractedFields, "rawText">)[] = [
+  "brandName", "classType", "alcoholContent", "netContents",
+  "governmentWarning", "producerInfo", "countryOfOrigin",
+];
+
+/** Total number of fields the system tracks */
+const TOTAL_FIELDS = FIELD_KEYS.length;
+
 /**
  * Count how many non-null fields with confidence > 0.2 an extraction has.
- * Used to pick the best result across multiple OCR passes.
+ * Uses the dynamic FIELD_KEYS list -- NOT hardcoded to 7.
  */
 function countFields(f: ExtractedFields): number {
-  const fields = [f.brandName, f.classType, f.alcoholContent, f.netContents,
-    f.governmentWarning, f.producerInfo, f.countryOfOrigin];
-  return fields.filter(r => r.value && r.confidence > 0.2).length;
+  return FIELD_KEYS.map(k => f[k]).filter(r => r.value && r.confidence > 0.2).length;
 }
+
+/** Fields where case accuracy matters (e.g. "GOVERNMENT WARNING:" must be all caps) */
+const CASE_SENSITIVE_FIELDS: Set<keyof Omit<ExtractedFields, "rawText">> = new Set([
+  "governmentWarning",
+]);
 
 /**
  * Merge the best field values from a secondary extraction into the primary.
- * Only overwrites fields that are null/missing in the primary.
+ *
+ * For case-sensitive fields (governmentWarning): prefers the secondary
+ * version if it's within 20% confidence of the primary. This ensures
+ * Tesseract's correct "GOVERNMENT WARNING:" (all caps) wins over ONNX's
+ * "wARNING" (lowercase w) even when ONNX has marginally higher confidence.
+ *
+ * For all other fields: replaces when secondary has higher confidence
+ * or primary is missing.
  */
 function mergeFields(primary: ExtractedFields, secondary: ExtractedFields): void {
-  const keys: (keyof Omit<ExtractedFields, "rawText">)[] = [
-    "brandName", "classType", "alcoholContent", "netContents",
-    "governmentWarning", "producerInfo", "countryOfOrigin",
-  ];
-  for (const key of keys) {
+  for (const key of FIELD_KEYS) {
     const pField = primary[key];
     const sField = secondary[key];
-    if ((!pField.value || pField.confidence < 0.2) && sField.value && sField.confidence > 0.2) {
+
+    if (!sField.value || sField.confidence <= 0.2) continue;
+
+    // Case-sensitive fields: prefer secondary (Tesseract) if within 20%
+    // of primary confidence. Tesseract is more reliable for exact casing.
+    if (CASE_SENSITIVE_FIELDS.has(key) && pField.value && sField.value) {
+      const within20pct = sField.confidence >= pField.confidence * 0.8;
+      if (within20pct) {
+        primary[key] = sField;
+        continue;
+      }
+      // Secondary confidence too low -- keep primary
+      continue;
+    }
+
+    // Default: replace if primary is empty or secondary has higher confidence
+    if (!pField.value || pField.confidence < 0.2 || sField.confidence > pField.confidence) {
       primary[key] = sField;
     }
   }
@@ -203,7 +234,7 @@ export async function recognizeWithFallback(
       const onnxCount = countFields(onnxFields);
 
       console.log(
-        `[OCR Engine] ONNX: ${onnxCount}/7 fields, ` +
+        `[OCR Engine] ONNX: ${onnxCount}/${TOTAL_FIELDS} fields, ` +
         `brand: "${onnxFields.brandName.value ?? "null"}" (${onnxFields.brandName.confidence})`
       );
 
@@ -211,11 +242,10 @@ export async function recognizeWithFallback(
       bestOcrResult = onnxResult;
       rawTexts.push(onnxResult.text);
 
-      // If ONNX got 7/7, we're done
-      if (onnxCount >= 7) {
-        console.log(`[OCR Engine] ONNX perfect (7/7). Done in ${Math.round(performance.now() - start)}ms`);
-        return { fields: best, ocrResult: bestOcrResult };
-      }
+      // Always run Tesseract normal pass even if ONNX found all fields.
+      // Tesseract often has higher per-field confidence (e.g. correct
+      // "GOVERNMENT WARNING:" caps vs ONNX's "wARNING" typo).
+      // mergeFields picks the higher-confidence version of each field.
     }
   } catch (error) {
     console.error("[OCR Engine] ONNX failed:", error);
@@ -227,7 +257,7 @@ export async function recognizeWithFallback(
   const tessCount = countFields(tessFields);
 
   console.log(
-    `[OCR Engine] Tesseract normal: ${tessCount}/7 fields, ` +
+    `[OCR Engine] Tesseract normal: ${tessCount}/${TOTAL_FIELDS} fields, ` +
     `brand: "${tessFields.brandName.value ?? "null"}" (${tessFields.brandName.confidence})`
   );
 
@@ -242,14 +272,14 @@ export async function recognizeWithFallback(
 
   // Check if we have enough after ONNX + Tesseract normal
   let currentCount = countFields(best);
-  if (currentCount >= 7) {
+  if (currentCount >= TOTAL_FIELDS) {
     best.rawText = rawTexts.join("\n\n--- TESSERACT PASS ---\n\n");
-    console.log(`[OCR Engine] Perfect after merge (7/7). Done in ${Math.round(performance.now() - start)}ms`);
+    console.log(`[OCR Engine] Perfect after merge (${TOTAL_FIELDS}/${TOTAL_FIELDS}). Done in ${Math.round(performance.now() - start)}ms`);
     return { fields: best, ocrResult: bestOcrResult };
   }
 
-  // If ONNX + Tesseract already gave us 5+ fields, skip expensive extra passes
-  if (currentCount >= 5) {
+  // If ONNX + Tesseract already gave us most fields, skip expensive extra passes
+  if (currentCount >= TOTAL_FIELDS - 2) {
     best.rawText = rawTexts.join("\n\n---\n\n");
     console.log(`[OCR Engine] Good enough (${currentCount}/7). Done in ${Math.round(performance.now() - start)}ms`);
     return { fields: best, ocrResult: bestOcrResult };
@@ -274,9 +304,9 @@ export async function recognizeWithFallback(
 
   // Check after pass 2
   currentCount = countFields(best);
-  if (currentCount >= 7) {
+  if (currentCount >= TOTAL_FIELDS) {
     best.rawText = rawTexts.join("\n\n---\n\n");
-    console.log(`[OCR Engine] Perfect after Pass 2 (7/7). Done in ${Math.round(performance.now() - start)}ms`);
+    console.log(`[OCR Engine] Perfect after Pass 2 (${TOTAL_FIELDS}/${TOTAL_FIELDS}). Done in ${Math.round(performance.now() - start)}ms`);
     return { fields: best, ocrResult: bestOcrResult };
   }
 
@@ -305,7 +335,7 @@ export async function recognizeWithFallback(
 
   best.rawText = rawTexts.join("\n\n---\n\n");
   const totalElapsed = Math.round(performance.now() - start);
-  console.log(`[OCR Engine] Final: ${countFields(best)}/7 fields in ${totalElapsed}ms`);
+  console.log(`[OCR Engine] Final: ${countFields(best)}/${TOTAL_FIELDS} fields in ${totalElapsed}ms`);
 
   return { fields: best, ocrResult: bestOcrResult };
 }
