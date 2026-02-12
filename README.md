@@ -175,8 +175,8 @@ docker run -p 3000:3000 ttb-label-verification
 
 This is a prototype. A production deployment at TTB would require:
 
+- **OCR Adapter Architecture** (critical enhancement): If outbound network access is allowed, add an OCR adapter layer with pluggable engines (Azure Document Intelligence, Azure Vision OCR, Google Document AI, AWS Textract). The app would choose the best engine available and automatically fall back to the local dual-engine (ONNX + Tesseract) when blocked by firewalls. **The current 100% local approach was a deliberate architectural choice** to handle firewall restrictions, but the adapter pattern makes cloud OCR a simple plug-in for production.
 - **COLA system integration** for automated application data import
-- **Azure AI Document Intelligence** as optional cloud OCR (current dual-engine local OCR already achieves high accuracy on most labels)
 - **User authentication and RBAC** for agent accounts
 - **Audit logging** and document retention per federal compliance requirements
 - **Database** for processing history, batch tracking, and reporting

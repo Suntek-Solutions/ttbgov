@@ -286,3 +286,57 @@ flowchart LR
 - **No external service dependencies** at runtime
 - **No database** -- all processing is stateless and in-memory
 - **Dockerfile** uses multi-stage build for minimal image size
+
+---
+
+## Production Extension Path: OCR Adapter Architecture
+
+**Critical Note:** The current architecture uses 100% local OCR (ONNX PaddleOCR + Tesseract.js) as a deliberate choice to handle firewall restrictions and eliminate external dependencies. However, the system is designed to support a pluggable OCR adapter layer for production environments with outbound network access.
+
+### Proposed OCR Adapter Pattern
+
+```typescript
+interface OCRAdapter {
+  name: string;
+  isAvailable(): Promise<boolean>;
+  extract(imageBuffer: Buffer): Promise<OCRResult>;
+}
+
+class OCRAdapterChain {
+  private adapters: OCRAdapter[] = [
+    new AzureDocumentIntelligenceAdapter(),  // Cloud (highest accuracy)
+    new AzureVisionOCRAdapter(),             // Cloud (fallback)
+    new ONNXPaddleOCRAdapter(),              // Local (primary fallback)
+    new TesseractAdapter()                   // Local (final fallback)
+  ];
+
+  async extract(imageBuffer: Buffer): Promise<OCRResult> {
+    for (const adapter of this.adapters) {
+      if (await adapter.isAvailable()) {
+        try {
+          return await adapter.extract(imageBuffer);
+        } catch (error) {
+          // Log and try next adapter
+          continue;
+        }
+      }
+    }
+    throw new Error('All OCR adapters failed');
+  }
+}
+```
+
+### Benefits
+
+1. **Automatic fallback** when cloud services are unreachable (firewall, network issues)
+2. **Zero code changes** to core extraction logic
+3. **Easy A/B testing** of different OCR engines
+4. **Cost optimization** (use cloud for complex labels, local for simple ones)
+5. **Firewall-friendly** (works 100% locally when needed)
+
+This adapter pattern could be implemented in production with environment variables controlling which engines are enabled:
+
+```bash
+OCR_ADAPTERS=azure-di,onnx,tesseract  # Cloud + local
+OCR_ADAPTERS=onnx,tesseract            # Local only (current mode)
+```

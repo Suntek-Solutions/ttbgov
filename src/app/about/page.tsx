@@ -249,6 +249,42 @@ export default function AboutPage() {
           </p>
         </CardContent>
       </Card>
+
+      {/* Production Considerations */}
+      <Card className="border-blue-200 bg-blue-50">
+        <CardHeader>
+          <CardTitle className="text-base text-blue-900">
+            Production Considerations
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm text-gray-700">
+          <p>
+            <strong className="text-blue-900">
+              OCR Adapter Architecture (Critical Enhancement):
+            </strong>{' '}
+            If outbound network access is allowed, the app can be extended with
+            an OCR adapter layer supporting pluggable engines (Azure Document
+            Intelligence, Azure Vision OCR, Google Document AI, AWS Textract).
+            The system would automatically choose the best engine available and
+            fall back to the local dual-engine (ONNX + Tesseract) when blocked
+            by firewalls.{' '}
+            <strong>
+              The current 100% local approach was a deliberate architectural
+              choice
+            </strong>{' '}
+            to handle firewall restrictions, but the adapter pattern makes cloud
+            OCR a simple plug-in for production environments with outbound
+            access.
+          </p>
+          <p>
+            <strong>Other Production Requirements:</strong> COLA system
+            integration for automated data import, user authentication/RBAC,
+            audit logging, database for processing history, Section 508
+            accessibility compliance, and load testing for 150K labels/year
+            across 47 agents.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
