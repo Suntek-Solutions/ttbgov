@@ -5,8 +5,8 @@
  * Addresses Jenny Park's concern about imperfect photos:
  * "labels photographed at weird angles, or the lighting is bad, or there's glare"
  *
- * Pipeline (intentionally light-touch -- aggressive processing like CLAHE
- * was tested and found to REDUCE accuracy by amplifying background noise):
+ * Pipeline (intentionally light-touch -- aggressive processing was tested
+ * and found to REDUCE accuracy by amplifying background noise):
  *   1. Resize to consistent width (normalize resolution for speed)
  *   2. Convert to grayscale (reduce color noise)
  *   3. Normalize (auto-levels for consistent brightness)
@@ -16,7 +16,6 @@
  *   - Raw image: 95% confidence, 1734ms
  *   - Resize only: 95% confidence, 489ms
  *   - Gray + resize: 95% confidence, 437ms
- *   - With CLAHE: 16% confidence (DESTROYED the image)
  *
  * Usage:
  *   import { preprocessImage } from "@/lib/ocr/preprocessor";
@@ -31,6 +30,9 @@ import sharp from "sharp";
 
 /** Target width for preprocessing. Balances detail vs OCR speed. */
 const TARGET_WIDTH = 1200;
+
+/** High-resolution target for small text (warnings, fine print) */
+const HIGH_RES_WIDTH = 1600;
 
 /** Minimum width below which we upscale for better OCR */
 const MIN_WIDTH = 600;
@@ -228,6 +230,64 @@ export async function preprocessImageInverted(imageBuffer: Buffer): Promise<Buff
   const elapsed = Math.round(performance.now() - start);
   console.log(
     `[Preprocessor:Inverted] ${inputWidth}px → ${INVERTED_TARGET}px, negate + grayscale + normalize + sharpen in ${elapsed}ms`
+  );
+
+  return result;
+}
+
+/**
+ * High-resolution preprocessing for small/fine print (government warnings, fine text).
+ *
+ * Uses 1600px resolution (vs standard 1200px) to preserve detail in small text
+ * that might be missed at lower resolutions. Especially useful for government
+ * warnings which are often printed in very small font.
+ *
+ * @param imageBuffer - Raw image data (JPEG, PNG, WebP, etc.)
+ * @returns High-resolution preprocessed image buffer
+ */
+export async function preprocessImageHighRes(imageBuffer: Buffer): Promise<Buffer> {
+  const start = performance.now();
+
+  if (!imageBuffer || imageBuffer.length === 0) {
+    throw new Error("Empty image buffer provided to high-res preprocessor");
+  }
+
+  let metadata;
+  try {
+    metadata = await sharp(imageBuffer).metadata();
+  } catch (error) {
+    throw new Error(
+      `Failed to read image: ${error instanceof Error ? error.message : "Unsupported or corrupt image format"}`
+    );
+  }
+
+  const inputWidth = metadata.width ?? 0;
+
+  let pipeline = sharp(imageBuffer);
+
+  // Step 1: Resize to higher target (1600px for small text)
+  if (inputWidth > HIGH_RES_WIDTH * 1.5 || inputWidth < MIN_WIDTH) {
+    pipeline = pipeline.resize(HIGH_RES_WIDTH, null, {
+      fit: "inside",
+      withoutEnlargement: inputWidth >= MIN_WIDTH,
+    });
+  }
+
+  // Step 2: Convert to grayscale
+  pipeline = pipeline.greyscale();
+
+  // Step 3: Normalize (auto-levels for consistent brightness)
+  pipeline = pipeline.normalize();
+
+  // Step 4: Gentle sharpen (helps slightly blurry photos without artifacts)
+  pipeline = pipeline.sharpen({ sigma: 1 });
+
+  // Output as PNG (lossless, best for OCR)
+  const result = await pipeline.png().toBuffer();
+
+  const elapsed = Math.round(performance.now() - start);
+  console.log(
+    `[Preprocessor:HighRes] ${inputWidth}px → ${HIGH_RES_WIDTH}px, grayscale + normalize + sharpen in ${elapsed}ms`
   );
 
   return result;

@@ -16,10 +16,10 @@ This document captures every area of the plan where there is risk, uncertainty, 
 
 0. **Dual-engine approach** -- Added ONNX PaddleOCR (PP-OCRv4 via multilingual-purejs-ocr) as primary OCR engine. Dramatically better on dark backgrounds (Corte Adagio, Casamigos), decorative fonts, and complex layouts. Tesseract.js serves as multi-pass fallback.
 1. **PSM initialization fix** -- Discovered that Tesseract.js workers skip large decorative text unless `tessedit_pageseg_mode` is explicitly set (even to the default value "3"). This single fix recovered brand names like "OLD TOM DISTILLERY" that were previously invisible.
-2. **Three-pass preprocessing pipeline:**
-   - Pass 1: Normal (resize 1200px + grayscale + normalize + sharpen) -- best for standard dark-on-light text
-   - Pass 2: High-contrast threshold (binary threshold instead of normalize) -- recovers oversized decorative fonts that normalize() destroys
-   - Pass 3: Color inversion at 2000px (negate + grayscale + normalize) -- for light-on-dark labels like Casamigos, Corte Adagio
+2. **Three-pass OCR pipeline (max):**
+   - Pass 1: ONNX PaddleOCR (always) -- processes raw image with built-in paragraph grouping, 0.5-2s
+   - Pass 2: Tesseract normal (conditional, if ONNX < 5 fields) -- resize 1200px + grayscale + normalize + sharpen
+   - Pass 3: Tesseract alt (conditional, if still < 5 fields) -- high-contrast threshold OR color inversion at 2000px, chosen based on what's missing
 3. **Smart fallback logic** -- Only runs additional passes when needed, with early exit when sufficient fields are found
 4. **Field extraction regex expansion** -- Added patterns for real COLA formats ("ALC X% BY VOL", "IMPORTED BY:", "FL.OZ", etc.)
 
@@ -49,7 +49,7 @@ This document captures every area of the plan where there is risk, uncertainty, 
 
 ## 3. Field Extraction from Raw OCR Text
 
-**The concern:** Tesseract.js returns a flat block of text. It does not know what a "brand name" or "ABV" is. Our plan uses regex patterns and heuristic parsing to extract structured fields. This works well when the OCR text is clean and follows predictable patterns. It breaks when:
+**The concern:** OCR engines return text without semantic structure. Tesseract.js returns a flat block of text; ONNX PaddleOCR provides paragraph-grouped output (which helps with layout preservation). Neither engine knows what a "brand name" or "ABV" is. Our plan uses regex patterns and heuristic parsing to extract structured fields. This works well when the OCR text is clean and follows predictable patterns. It breaks when:
 - The OCR misreads characters (e.g., "45%" becomes "4S%")
 - Label layout causes text to appear in unexpected order
 - Decorative text or background text gets mixed in with label text
@@ -129,14 +129,14 @@ This document captures every area of the plan where there is risk, uncertainty, 
 
 ## 8. What "AI-Powered" Means to the Evaluators
 
-**The concern:** The spec title says "AI-Powered." Our plan uses Tesseract.js, which is OCR -- not what most people think of when they hear "AI" in 2025/2026. The evaluators may expect to see a large language model, a neural network, or something that feels more "intelligent" than pattern matching and fuzzy string comparison.
+**The concern:** The spec title says "AI-Powered." The evaluators may expect to see a large language model or something that feels more "intelligent" than pattern matching and fuzzy string comparison.
 
-**Why this matters:** "Creative problem-solving" and "Appropriate technical choices for the scope" are evaluation criteria. If the evaluators expected a GPT integration and got Tesseract regex, there could be a perception gap.
+**Why this matters:** "Creative problem-solving" and "Appropriate technical choices for the scope" are evaluation criteria. If the evaluators expected a GPT integration and got local OCR, there could be a perception gap.
 
-**What we planned:** Tesseract.js (which is neural network-based OCR under the hood -- it uses an LSTM neural network) combined with intelligent field extraction and fuzzy matching logic.
+**What we planned:** Dual AI-powered OCR -- ONNX PaddleOCR (PP-OCRv4, a deep learning model trained on millions of text images) as primary, plus Tesseract.js (LSTM neural network) as fallback -- combined with intelligent field extraction and fuzzy matching logic.
 
 **Where we might need to pivot:**
-- Frame the documentation carefully: Tesseract IS a neural network. The LSTM-based OCR engine is machine learning. The fuzzy matching and field extraction are rule-based AI. This is a legitimate "AI-powered" application.
+- Frame the documentation carefully: Both OCR engines are neural network-based. ONNX PaddleOCR uses PP-OCRv4, a state-of-the-art deep learning detection + recognition pipeline. Tesseract uses an LSTM neural network. The fuzzy matching and field extraction are rule-based AI. This is a legitimate "AI-powered" application.
 - If during implementation we feel the "AI" story is too thin, we could add a **lightweight local inference step** -- for example, using a small classifier to determine beverage type from the extracted text, or using NLP-based entity extraction instead of pure regex.
 - The strongest defense is a working, accurate, fast tool. If it solves the problem well, the "is it AI enough?" question becomes academic.
 
@@ -178,7 +178,7 @@ This document captures every area of the plan where there is risk, uncertainty, 
 
 | # | Concern | Severity | When we will know |
 |---|---|---|---|
-| 1 | Tesseract OCR accuracy | MEDIUM (mitigated) | Multi-pass OCR with 3 strategies validated |
+| 1 | Dual OCR accuracy (ONNX + Tesseract) | MEDIUM (mitigated) | Dual-engine multi-pass strategy validated |
 | 2 | Performance on Azure | LOW (validated locally) | After deployment |
 | 3 | Field extraction reliability | MEDIUM-HIGH | During extraction build (step 3) |
 | 4 | Government warning detection | MEDIUM | During verification build (step 4) |

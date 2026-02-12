@@ -91,30 +91,41 @@ Every feature and architectural decision traces directly to something a stakehol
 
 **What we did:**
 - **Primary: ONNX PaddleOCR** (PP-OCRv4 via multilingual-purejs-ocr) -- runs on the raw image with built-in paragraph grouping. Dramatically better on dark backgrounds, decorative fonts, and complex layouts than Tesseract alone.
-- **Fallback: Tesseract.js multi-pass** -- three preprocessing strategies, each targeting a different class of label:
-  1. **Normal pass** (always): resize 1200px + grayscale + normalize + sharpen -- standard dark-text-on-light labels
-  2. **High-contrast pass** (if fields missing): binary thresholding instead of normalize -- recovers large decorative text
-  3. **Color-inverted pass** (for dark backgrounds): negate at 2000px + grayscale + normalize -- converts light-on-dark labels to readable text
+- **Conditional fallback: Tesseract.js** -- only runs if ONNX finds < 5 fields. Max 3 passes total:
+  1. **ONNX PaddleOCR** (always): raw image, paragraph-grouped output, 0.5-2s
+  2. **Tesseract normal** (if ONNX < 5 fields): resize 1200px + grayscale + normalize + sharpen
+  3. **Tesseract alt pass** (if still < 5 fields): high-contrast threshold OR color inversion at 2000px, chosen based on what's missing
+- **Case-sensitive field correction**: When ONNX finds a government warning, a quick Tesseract pass runs to correct casing (ONNX sometimes reads "wARNING" instead of "WARNING")
 - **Explicit Tesseract PSM initialization** -- discovered that `setParameters({ tessedit_pageseg_mode: "3" })` must be called explicitly for reliable large-font detection
-- **Smart fallback logic** -- each pass only runs when the previous pass left fields undetected, with early exit to stay under the 5-second SLA
-- **Expanded extraction patterns** -- regex patterns tested against real COLA labels (not just generated ones): "ALC X% BY VOL", "IMPORTED BY:", "FL.OZ", "PRODUCT OF" across line breaks
+- **Universal pattern extraction** -- no hardcoded country lists or test-specific keywords. Patterns are designed to work across 150K+ label applications:
+  - Standard ABV formats ("X% Alc./Vol.", "ALC X% BY VOL", etc.)
+  - Net contents with OCR truncation fallback ("750 mL", "750m")
+  - Producer via keyword phrases ("Distilled by", "Imported by", "Elaborado por", etc.)
+  - Origin via keyword phrases ("Product of", "Made in", "Hecho en", etc.)
+  - Class/type via TTB taxonomy keywords only (no regional appellations or marketing terms)
+  - Brand name extracted LAST, from text not consumed by other fields
 - Graceful error messaging when OCR confidence is too low to produce reliable results
 
-**Results:** 7/7 fields detected on our best real COLA label (Filadoro wine). Dark-background labels like Corte Adagio and Casamigos now readable via ONNX PaddleOCR. Monkey 47 improved from 1/7 to 3/7 fields.
+**Comprehensive test results (59 labels: 5 generated + 54 real COLA, no test-specific hacks):**
+- Brand name detection: 100% across all labels ✅
+- Real COLA avg: 3.9/7 fields (56%)
+- Generated labels avg: 6.2/7 fields (89%)
+- Class/type detection: 85% on real COLA ✅
+- Government warning caps: 100% correct when detected ✅
+- Average processing: 3.2 seconds (0 labels exceeded 10s SLA)
+- 7/7 fields detected on best real COLA labels (Filadoro, Azienda Agricola, Cantine Mothia, Pietro Rinaldi wines)
 
 ---
 
 ## Test Label Strategy
 
-The spec encourages creating test labels and notes that AI image generation tools work well for this. We went further and sourced labels from three places to test against realistic conditions:
+The spec encourages creating test labels and notes that AI image generation tools work well for this. We went further and sourced labels from two complementary sources to test against realistic conditions:
 
-1. **TTB Public COLA Registry** -- Real approved label images downloaded from TTB's free public database (https://www.ttbonline.gov/colasonline/publicSearchColasBasic.do). No login required. These test against genuine label layouts, fonts, and formatting that our OCR engines will encounter in production.
+1. **TTB Public COLA Registry** -- 54 real approved label images downloaded from TTB's free public database (https://www.ttbonline.gov/colasonline/publicSearchColasBasic.do). No login required. These test against genuine label layouts, fonts, and formatting that our OCR engines will encounter in production. Covers distilled spirits (18), wine (18), and malt beverages (18).
 
-2. **AI-generated labels** -- Controlled test cases with specific pass/fail conditions: compliant label (all pass), wrong ABV (fail), title-case warning instead of all-caps (fail), brand name case mismatch (pass with fuzzy match), missing warning (flag). These prove each verification feature works correctly.
+2. **AI-generated labels** -- 5 controlled test cases with specific pass/fail conditions: compliant label (all pass), wrong ABV (fail), title-case warning instead of all-caps (fail), brand name case mismatch (pass with fuzzy match), missing warning (flag). These prove each verification feature works correctly.
 
-3. **Degraded images** -- Real or generated labels with simulated poor conditions: angled photo, low contrast, blur. These stress-test the image preprocessing pipeline and document the OCR's accuracy boundary.
-
-All test labels are in `public/test-labels/` organized by source (`real/`, `generated/`) with a unified `demo-labels.json` catalog containing application data and expected results for each label.
+All 59 test labels are in `public/test-labels/` organized by source (`real/`, `generated/`) with a unified `demo-labels.json` catalog containing application data and expected results for each label.
 
 ---
 
@@ -182,7 +193,7 @@ This project was built by Scott Vidito with the assistance of an AI coding agent
 - Analyzed the spec and extracted requirements from stakeholder interviews
 - Proposed architecture decisions (which Scott reviewed, questioned, and directed)
 - Generated code for the OCR engine, field extraction, verification logic, API routes, and UI components
-- Ran tests, diagnosed issues (e.g., CLAHE preprocessing destroying accuracy, Tesseract.js Turbopack module resolution), and iterated on fixes
+- Ran tests, diagnosed issues (e.g., aggressive preprocessing destroying accuracy, Tesseract.js Turbopack module resolution, test-specific overfitting), and iterated on fixes
 - Wrote documentation drafts that Scott reviewed and refined
 - Deployed to Azure Container Apps via CLI
 

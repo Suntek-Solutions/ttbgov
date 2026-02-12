@@ -54,7 +54,7 @@ cp .env.example .env.local
 A compliance agent reviews ~150,000 label applications per year. Each review involves comparing what's printed on a physical label against what's declared in the application. This tool automates that comparison:
 
 1. **Upload** a label image (drag-and-drop or file picker)
-2. **AI extracts** all text from the label using dual OCR engines (ONNX PaddleOCR primary + Tesseract.js fallback), both running locally with no cloud APIs
+2. **AI extracts** all text from the label using dual OCR engines (ONNX PaddleOCR primary + Tesseract.js conditional fallback), both running locally with no cloud APIs
 3. **Enter application data** in a simple form (brand name, ABV, class/type, etc.)
 4. **Get instant results** -- field-by-field pass/fail with confidence scores
 
@@ -75,8 +75,9 @@ A compliance agent reviews ~150,000 label applications per year. Each review inv
 |---|---|---|
 | Framework | Next.js 16 (TypeScript) | Single codebase, single deployment, type-safe |
 | UI | React 19 + Tailwind CSS 4 + shadcn/ui | Accessible, clean, responsive -- usable by non-technical staff |
-| OCR | ONNX PaddleOCR (primary) + Tesseract.js 7 (fallback) | Dual local OCR: PaddleOCR PP-OCRv4 for high accuracy on complex labels, Tesseract.js multi-pass fallback. Zero cloud dependency |
-| Image Processing | sharp | Fast native Node.js image manipulation for preprocessing |
+| OCR | ONNX PaddleOCR (primary) + Tesseract.js 7 (conditional fallback) | Dual local OCR: PaddleOCR PP-OCRv4 for high accuracy, Tesseract.js conditional fallback. Max 3 passes. Zero cloud dependency |
+| Pattern Extraction | Universal regex + fuzzy matching | TTB-standard patterns for ABV, net contents, warning, producer, origin, class/type. No hardcoded country lists. |
+| Image Processing | sharp | Preprocessing pipeline (1200px grayscale + normalize + sharpen) with threshold and inversion variants |
 | Fuzzy Matching | string-similarity-js | Case/punctuation-normalized comparison with confidence scores |
 | Deployment | Azure Container Apps | Persistent container, always-on, aligns with TTB's Azure infrastructure |
 
@@ -91,6 +92,7 @@ The TTB network blocks outbound traffic to many domains. A previous vendor's clo
 | Question | Document |
 |---|---|
 | How do I set up and run this? | You're here -- see [Quick Start](#quick-start) above |
+| How do I use this tool? | Visit the [How It Works](/about) page in the app -- plain-language walkthrough for all experience levels |
 | Why were these technologies chosen? | [docs/APPROACH.md](docs/APPROACH.md) -- maps every stakeholder interview to a design decision |
 | How does the system work technically? | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) -- system diagrams, data flow, API specs, TypeScript interfaces |
 | What could go wrong and how would you handle it? | [docs/considerations/risks.md](docs/considerations/risks.md) -- 10 risks ranked by severity with pivot strategies |

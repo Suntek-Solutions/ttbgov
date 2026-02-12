@@ -22,7 +22,7 @@ flowchart TB
     end
 
     subgraph engine [Processing Engine - All Local]
-        Preprocess["Image Preprocessor\n(sharp: grayscale, contrast,\nresize, sharpen, denoise)"]
+        Preprocess["Image Preprocessor\n(sharp: grayscale, normalize,\nresize, sharpen)"]
         OCR["Dual OCR (ONNX PaddleOCR + Tesseract.js)\n(persistent worker pool)"]
         FieldParser["Field Extractor\n(regex + heuristic parsing)"]
         Comparator["Field Comparator\n(fuzzy match + numeric normalize)"]
@@ -52,7 +52,7 @@ sequenceDiagram
     participant UI as React Frontend
     participant API as API Routes
     participant Pre as Image Preprocessor
-    participant OCR as Tesseract.js (+ ONNX PaddleOCR)
+    participant OCR as ONNX PaddleOCR (+ Tesseract.js)
     participant Ext as Field Extractor
     participant Ver as Comparator
     participant Warn as Warning Validator
@@ -90,7 +90,7 @@ sequenceDiagram
 |---|---|
 | `engine.ts` | Manages dual OCR: ONNX PaddleOCR (primary) + Tesseract.js worker pool (fallback). Creates workers on server startup, keeps them warm between requests, handles cleanup. Exposes a simple `recognize(imageBuffer)` interface to the rest of the app. |
 | `onnx.ts` | ONNX PaddleOCR engine wrapper (multilingual-purejs-ocr). Singleton instance, lazy initialization, paragraph-grouped text output. |
-| `preprocessor.ts` | Image preprocessing pipeline using sharp. Takes a raw image buffer, applies grayscale conversion, contrast enhancement, sharpening, noise reduction, and resize. Returns an optimized buffer ready for OCR. |
+| `preprocessor.ts` | Image preprocessing pipeline using sharp. Takes a raw image buffer, applies grayscale conversion, contrast normalization, sharpening, and resize. Returns an optimized buffer ready for OCR. |
 
 ### `src/lib/extraction/`
 

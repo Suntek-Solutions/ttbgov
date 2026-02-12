@@ -41,7 +41,7 @@ Marcus gave the technical landscape. His interview shaped the architecture more 
 | "Not looking to integrate with COLA directly" | **Standalone prototype.** No legacy system integration. This is freeing -- we can pick any stack. |
 | "For a prototype? Just don't do anything crazy" | No over-engineering. No database, no auth, no user accounts. Keep it clean and focused. |
 | "Our network blocks outbound traffic to a lot of domains" | **This is the firewall constraint.** The scanning vendor's cloud ML endpoints were blocked. Any solution that depends on calling OpenAI, Google Vision, or Azure AI during runtime would face this same problem in production. |
-| "Half their features didn't work because our firewall blocked connections to their ML endpoints" | Reinforces the above. **The OCR/AI must run locally -- bundled with the app, no outbound API calls.** This single constraint eliminated the most popular approaches (GPT-4o Vision, Google Cloud Vision, Azure Document Intelligence) and led directly to Tesseract.js. |
+| "Half their features didn't work because our firewall blocked connections to their ML endpoints" | Reinforces the above. **The OCR/AI must run locally -- bundled with the app, no outbound API calls.** This single constraint eliminated the most popular approaches (GPT-4o Vision, Google Cloud Vision, Azure Document Intelligence) and led directly to dual local OCR (ONNX PaddleOCR + Tesseract.js). |
 
 ### Dave Morrison (Senior Compliance Agent, 28 years)
 
@@ -137,15 +137,17 @@ This dual approach shows the evaluators that we understood the nuance -- not eve
 
 ### Decision 6: Image Preprocessing
 
-Jenny flagged imperfect images as a real problem. Rather than hoping Tesseract handles it, we preprocess every image through a pipeline before OCR:
+Jenny flagged imperfect images as a real problem. The dual-engine approach handles this at two levels:
 
-1. **Resize** -- normalize to a consistent resolution for Tesseract
+- **ONNX PaddleOCR (primary)** processes the raw image directly -- its built-in preprocessing handles most labels without our intervention.
+- **Tesseract.js (conditional fallback)** benefits from a `sharp` preprocessing pipeline when ONNX finds fewer than 5 fields:
+
+1. **Resize** -- normalize to 1200px width for consistent Tesseract input
 2. **Grayscale conversion** -- reduces noise from color variation
-3. **Contrast enhancement** -- makes text pop against backgrounds
+3. **Contrast normalization** -- makes text pop against backgrounds
 4. **Sharpening** -- improves edge definition on blurry photos
-5. **Noise reduction** -- removes artifacts from low-quality camera images
 
-This is done with `sharp`, a fast native Node.js image library. It runs in milliseconds and dramatically improves OCR accuracy on real-world label photos.
+An alternate pass (high-contrast binary threshold or color inversion at 2000px) runs only when the normal Tesseract pass still leaves gaps. This is done with `sharp`, a fast native Node.js image library. Preprocessing adds ~100-200ms but significantly improves OCR accuracy on imperfect real-world label photos.
 
 ---
 

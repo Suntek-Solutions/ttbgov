@@ -1,6 +1,7 @@
 {
   "name": "ttb-label-verification",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "AI-powered alcohol label verification tool for TTB compliance agents. Dual local OCR (ONNX PaddleOCR + Tesseract.js) with zero cloud dependency.",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -8,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "generate-demo-labels": "tsx scripts/generate-demo-labels.ts"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",

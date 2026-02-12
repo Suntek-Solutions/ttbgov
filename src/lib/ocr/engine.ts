@@ -7,13 +7,14 @@
  *   - 0.5-2s per label (faster than Tesseract multi-pass)
  *   - 100% local, zero API calls
  *
- * Fallback: Tesseract.js (LSTM) with multi-pass preprocessing
- *   - Used when ONNX OCR is unavailable or for gap-filling
+ * Fallback: Tesseract.js (LSTM) with conditional multi-pass preprocessing
+ *   - Only runs if ONNX finds < 5 fields
  *   - Pass 1: Normal (resize + grayscale + normalize + sharpen)
- *   - Pass 2: High-contrast threshold (binary threshold)
- *   - Pass 3: Color inversion at 2000px (for dark backgrounds)
+ *   - Pass 2: High-contrast threshold OR color inversion (chosen based on need)
  *
  * Both engines run 100% locally -- zero cloud dependency.
+ *
+ * Max 3 passes total: ONNX -> Tesseract normal (conditional) -> alt pass (conditional)
  *
  * Usage:
  *   import { recognizeWithFallback } from "@/lib/ocr/engine";
@@ -199,12 +200,12 @@ function mergeFields(primary: ExtractedFields, secondary: ExtractedFields): void
 }
 
 /**
- * Dual-engine OCR: ONNX PaddleOCR primary, Tesseract multi-pass fallback.
+ * Dual-engine OCR: ONNX PaddleOCR primary, Tesseract conditional fallback.
  *
- * Strategy:
- * 1. Try ONNX OCR on the raw image (best accuracy, 0.5-2s)
- * 2. Run Tesseract normal pass -- merge any new fields into best result
- * 3. If still < 7 fields, run Tesseract threshold/inversion passes
+ * Simplified strategy (max 3 passes):
+ * 1. ONNX PaddleOCR on raw image (best accuracy, 0.5-2s)
+ * 2. Tesseract normal pass (only if ONNX found < 5 fields)
+ * 3. Tesseract alt pass: threshold OR inversion (only if still < 5 fields)
  *
  * A persistent `best` variable accumulates the best field values across
  * all engines and passes. Each pass only fills in fields that are still missing.
@@ -222,7 +223,7 @@ export async function recognizeWithFallback(
   // Accumulates the best fields across all engines/passes
   let best: ExtractedFields | null = null;
   let bestOcrResult: OcrResult = { text: "", confidence: 0, processingTimeMs: 0 };
-  let rawTexts: string[] = [];
+  const rawTexts: string[] = [];
 
   // ---- Engine 1: ONNX PaddleOCR (primary) ----
   try {
@@ -242,10 +243,22 @@ export async function recognizeWithFallback(
       bestOcrResult = onnxResult;
       rawTexts.push(onnxResult.text);
 
-      // Always run Tesseract normal pass even if ONNX found all fields.
-      // Tesseract often has higher per-field confidence (e.g. correct
-      // "GOVERNMENT WARNING:" caps vs ONNX's "wARNING" typo).
-      // mergeFields picks the higher-confidence version of each field.
+      // If ONNX found >= 5 fields, only run Tesseract for case-sensitive
+      // field correction (e.g., "GOVERNMENT WARNING:" casing). Skip the
+      // full multi-pass fallback since ONNX has good coverage.
+      if (onnxCount >= 5) {
+        // Quick Tesseract pass for case-sensitive field correction
+        if (best.governmentWarning.value) {
+          console.log("[OCR Engine] ONNX found warning -- running Tesseract for case correction...");
+          const tessResult = await recognizeImage(preprocessedBuffer);
+          const tessFields = extractFields(tessResult.text, tessResult.confidence);
+          mergeFields(best, tessFields); // mergeFields prefers Tesseract for case-sensitive fields
+          rawTexts.push(tessResult.text);
+        }
+        best.rawText = rawTexts.join("\n\n---\n\n");
+        console.log(`[OCR Engine] ONNX found ${onnxCount}/${TOTAL_FIELDS} fields. Done in ${Math.round(performance.now() - start)}ms`);
+        return { fields: best, ocrResult: bestOcrResult };
+      }
     }
   } catch (error) {
     console.error("[OCR Engine] ONNX failed:", error);
@@ -265,72 +278,49 @@ export async function recognizeWithFallback(
     best = tessFields;
     bestOcrResult = tessResult;
   } else {
-    // Merge Tesseract into ONNX results (only fills missing fields)
+    // Merge Tesseract into ONNX results (fills missing fields, fixes casing)
     mergeFields(best, tessFields);
   }
   rawTexts.push(tessResult.text);
 
   // Check if we have enough after ONNX + Tesseract normal
   let currentCount = countFields(best);
-  if (currentCount >= TOTAL_FIELDS) {
-    best.rawText = rawTexts.join("\n\n--- TESSERACT PASS ---\n\n");
-    console.log(`[OCR Engine] Perfect after merge (${TOTAL_FIELDS}/${TOTAL_FIELDS}). Done in ${Math.round(performance.now() - start)}ms`);
-    return { fields: best, ocrResult: bestOcrResult };
-  }
-
-  // If ONNX + Tesseract already gave us most fields, skip expensive extra passes
-  if (currentCount >= TOTAL_FIELDS - 2) {
+  if (currentCount >= 5) {
     best.rawText = rawTexts.join("\n\n---\n\n");
-    console.log(`[OCR Engine] Good enough (${currentCount}/7). Done in ${Math.round(performance.now() - start)}ms`);
+    console.log(`[OCR Engine] Good after merge (${currentCount}/${TOTAL_FIELDS}). Done in ${Math.round(performance.now() - start)}ms`);
     return { fields: best, ocrResult: bestOcrResult };
   }
 
-  // ---- Tesseract Pass 2: High-contrast threshold ----
-  let pass2Gained = 0;
+  // ---- Pass 3: Alt preprocessing (threshold OR inversion) ----
+  // Choose based on what's missing: if government warning is missing,
+  // try high-contrast threshold (better for fine print). Otherwise,
+  // try inversion (better for dark backgrounds).
+  const missingWarning = !best.governmentWarning.value || best.governmentWarning.confidence < 0.3;
+
   try {
-    console.log("[OCR Engine] Running Tesseract Pass 2 (high-contrast threshold)...");
-    const hcBuffer = await preprocessImageHighContrast(rawImageBuffer);
-    const hcOcr = await recognizeImage(hcBuffer);
-    const hcFields = extractFields(hcOcr.text, hcOcr.confidence);
-    const beforeMerge = countFields(best);
-    mergeFields(best, hcFields);
-    pass2Gained = countFields(best) - beforeMerge;
-    rawTexts.push(hcOcr.text);
-
-    console.log(`[OCR Engine] Pass 2: +${pass2Gained} new fields, total: ${countFields(best)}/7`);
+    if (missingWarning) {
+      console.log("[OCR Engine] Running alt pass (high-contrast threshold)...");
+      const altBuffer = await preprocessImageHighContrast(rawImageBuffer);
+      const altOcr = await recognizeImage(altBuffer);
+      const altFields = extractFields(altOcr.text, altOcr.confidence);
+      const beforeMerge = countFields(best);
+      mergeFields(best, altFields);
+      const gained = countFields(best) - beforeMerge;
+      rawTexts.push(altOcr.text);
+      console.log(`[OCR Engine] Alt pass (threshold): +${gained} new fields, total: ${countFields(best)}/${TOTAL_FIELDS}`);
+    } else {
+      console.log("[OCR Engine] Running alt pass (color inversion)...");
+      const invBuffer = await preprocessImageInverted(rawImageBuffer);
+      const invOcr = await recognizeImage(invBuffer);
+      const invFields = extractFields(invOcr.text, invOcr.confidence);
+      const beforeMerge = countFields(best);
+      mergeFields(best, invFields);
+      const gained = countFields(best) - beforeMerge;
+      rawTexts.push(invOcr.text);
+      console.log(`[OCR Engine] Alt pass (inversion): +${gained} new fields, total: ${countFields(best)}/${TOTAL_FIELDS}`);
+    }
   } catch (error) {
-    console.error("[OCR Engine] Pass 2 failed:", error);
-  }
-
-  // Check after pass 2
-  currentCount = countFields(best);
-  if (currentCount >= TOTAL_FIELDS) {
-    best.rawText = rawTexts.join("\n\n---\n\n");
-    console.log(`[OCR Engine] Perfect after Pass 2 (${TOTAL_FIELDS}/${TOTAL_FIELDS}). Done in ${Math.round(performance.now() - start)}ms`);
-    return { fields: best, ocrResult: bestOcrResult };
-  }
-
-  // Skip inversion if pass 2 gained nothing and we have decent results
-  if (pass2Gained <= 0 && currentCount >= 4) {
-    best.rawText = rawTexts.join("\n\n---\n\n");
-    console.log(`[OCR Engine] Pass 2 gained nothing, have ${currentCount}/7. Done in ${Math.round(performance.now() - start)}ms`);
-    return { fields: best, ocrResult: bestOcrResult };
-  }
-
-  // ---- Tesseract Pass 3: Color inversion (for dark backgrounds) ----
-  try {
-    console.log("[OCR Engine] Running Tesseract Pass 3 (color inversion)...");
-    const invBuffer = await preprocessImageInverted(rawImageBuffer);
-    const invOcr = await recognizeImage(invBuffer);
-    const invFields = extractFields(invOcr.text, invOcr.confidence);
-    const beforeMerge = countFields(best);
-    mergeFields(best, invFields);
-    const pass3Gained = countFields(best) - beforeMerge;
-    rawTexts.push(invOcr.text);
-
-    console.log(`[OCR Engine] Pass 3: +${pass3Gained} new fields, total: ${countFields(best)}/7`);
-  } catch (error) {
-    console.error("[OCR Engine] Pass 3 failed:", error);
+    console.error("[OCR Engine] Alt pass failed:", error);
   }
 
   best.rawText = rawTexts.join("\n\n---\n\n");

@@ -48,7 +48,8 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# Cursor
+# Cursor IDE
+.cursor/
 .cursorignore
 .cursorindexingignore
 

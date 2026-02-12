@@ -185,7 +185,7 @@ We assumed our validator can hard-code this text as the expected value.
 
 | ID | Assumption | Confidence | Impact if Wrong |
 |---|---|---|---|
-| A1 | Tesseract accuracy on labels | MEDIUM | HIGH -- core feature breaks |
+| A1 | Dual OCR accuracy on labels | MEDIUM | HIGH -- core feature breaks |
 | A2 | 1-3 second OCR performance | MEDIUM | HIGH -- fails 5-second SLA |
 | A3 | Azure Container Apps sufficiency | HIGH | LOW -- existing Azure account, adjustable resources |
 | A4 | Fictional stakeholders | HIGH | NONE -- approach is same |

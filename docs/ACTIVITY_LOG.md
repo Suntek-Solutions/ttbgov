@@ -1,496 +1,196 @@
 # Activity Log
 
-Project activity history for the TTB Label Verification App. Maintained throughout the entire project lifecycle for full transparency. Every entry includes a timestamp and a summary of what was done.
+Development history for the TTB Label Verification App. Maintained throughout the project lifecycle for full transparency.
 
-**Contributors:** Scott Vidito (developer) + AI assistant (Cursor)
-
----
-
-## 2026-02-09 (Monday) -- Project Setup & Planning
-
-- **2026-02-09 ~5:00 PM** -- Received take-home project spec from TTB hiring team. One-week deadline.
-
-- **2026-02-09 ~5:15 PM** -- Converted PDF spec to markdown and broke it into focused reference documents in `docs/spec/`: interviews, requirements, sample label, deliverables, and evaluation criteria. Organized for quick lookup during development.
-
-- **2026-02-09 ~5:30 PM** -- Created full project plan (`.cursor/plans/ttb_label_verification_app_cf38bd97.plan.md`). Read every stakeholder interview line by line and extracted implicit requirements, constraints, and preferences. Key architecture decisions: Next.js (TypeScript) full-stack, Tesseract.js for local OCR (no cloud API dependencies), Azure Container Apps for persistent deployment, shadcn/ui + Tailwind for accessible UI. 11-step implementation sequence designed to front-load risk validation.
-
-- **2026-02-09 ~6:00 PM** -- Created internal planning documents in `docs/considerations/`:
-  - `rationale.md` -- Maps every stakeholder quote to a design decision. Covers the full decision tree: OCR engine (4 options evaluated), tech stack (4 options), deployment platform, matching strategy, image preprocessing.
-  - `risks.md` -- 10 risks with severity ratings and specific pivot strategies. Top 3 (OCR accuracy, performance, field extraction) are validated in the first half of the build.
-  - `assumptions.md` -- 12 assumptions with confidence levels and impact-if-wrong analysis. Cross-referenced to corresponding risks.
-
-- **2026-02-09 ~6:30 PM** -- Created skeleton submission documents as living documents to be updated throughout the build:
-  - `README.md` -- Quick start, features, tech stack with rationale, trade-offs, production roadmap
-  - `docs/APPROACH.md` -- Stakeholder-to-decision mapping, tools, assumptions, trade-offs, what would change for production
-  - `docs/ARCHITECTURE.md` -- System diagrams (mermaid), sequence diagram, module responsibilities, TypeScript interface skeletons, API route specs with example JSON, performance and deployment architecture
-
-- **2026-02-09 ~7:00 PM** -- Set up AI tooling for the build. Evaluated available MCP servers and documented usage in `.cursor/rules/mcp-servers.mdc`. Resolved Context7 library IDs for all 6 stack libraries so documentation lookups are instant during coding. Key servers: Context7 (docs), Playwright (UI testing), 21st.dev Magic (component generation), Next.js DevTools (to add when dev server is running).
-
-- **2026-02-09 ~7:15 PM** -- Expanded test label strategy and sourced initial reference data. Discovered TTB has a free Public COLA Registry with real approved label images (no login required). Plan now sources test labels from 3 places: (1) real labels from COLA registry, (2) AI-generated controlled pass/fail scenarios, (3) degraded images for preprocessing stress tests. Organized into `public/test-labels/real/`, `generated/`, `degraded/` with a README per folder. Updated plan, APPROACH.md, and README. Browsed the TTB Public COLA Registry and recorded real COLA application data for 3 approved bourbon labels (Trail View Whiskey, Kalifornia Distilleries, Belle Isle) with full field details and registry URLs. Created `public/test-labels/` folder structure (`real/`, `generated/`, `degraded/`) with a README documenting all test cases, expected results, and reference COLA data. Also fixed: marked documentation-init step as completed in plan, softened considerations/README.md language.
-
-- **2026-02-09 ~7:30 PM** -- Final audit, created `.env.example`, replaced Python `.gitignore`, and committed project foundation.
-
-- **2026-02-09 ~7:35 PM** -- Generated 5 AI test label images and placed in `public/test-labels/generated/`:
-  - `compliant-label.png` -- Old Tom Distillery bourbon, all fields correct (should pass all checks)
-  - `wrong-abv.png` -- Stone's Throw bourbon, label shows 40% but application will say 45% (should fail ABV)
-  - `wrong-warning-case.png` -- Copper Ridge rye, "Government Warning" in title case not all caps (should fail warning)
-  - `brand-case-mismatch.png` -- Old Tom wine label, "OLD TOM" on label vs "Old Tom" in form (should pass with fuzzy match)
-  - `missing-warning.png` -- Harbor Light gin, no government warning on label at all (should flag missing)
+**Contributors:** Scott Vidito (developer) + AI assistant (Cursor IDE with Claude)
 
 ---
 
 ## Current Project State
 
-**Phase:** Dual OCR engine complete (ONNX PaddleOCR primary + Tesseract.js fallback). All core features implemented, tested, and documented. Pending: Azure redeploy (v8).
-**Live URL:** https://ttb-label-verification.delightfulbeach-49152395.eastus.azurecontainerapps.io (v7 deployed; v8 with dual OCR engine pending)
-**Plan reference:** `.cursor/plans/ttb_label_verification_app_cf38bd97.plan.md`
+**Phase:** Complete. Universal OCR extraction pipeline, fully documented, ready for submission.
+**Live URL:** https://ttb-label-verification.delightfulbeach-49152395.eastus.azurecontainerapps.io
+**Tag:** `v2.0-universal-extraction`
+
+**Test Results (59 labels, universal extraction, no test-specific hacks):**
+
+| Metric | Result |
+|---|---|
+| Labels tested | 59 (5 generated + 54 real COLA) |
+| Pass rate | 100% (59/59) |
+| Avg processing | 3.2s |
+| Labels > 10s SLA | 0 |
+| Brand name | 100% |
+| Class/type | 85% |
+| ABV | 57% |
+| Net contents | 59% |
+| Gov warning | 37% (many imported labels lack English warning) |
+| Gov warning caps | 100% correct when detected |
+| Producer | 30% |
+| Origin | 22% |
+
+**Remaining:** Push to GitHub, redeploy to Azure, submit to TTB.
 
 ---
 
 ## Session Log
 
-### Session 1 -- `v0.1-planning`
+### Session 1 -- Project Setup & Planning (`v0.1-planning`)
 
-| | |
-|---|---|
-| **Date** | 2026-02-09 (Monday) |
-| **Time** | 5:45 PM - 7:45 PM MST (~2 hours) |
-| **Phase** | Project Setup & Planning |
-| **Plan steps completed** | Step 1 (documentation init) |
-| **Commit** | `v0.1-planning` |
+**2026-02-09 (Monday), 5:45 PM - 7:45 PM MST (~2 hours)**
 
-**What was done:**
-- Received and analyzed the take-home spec (PDF converted to markdown, broken into 5 reference docs)
-- Created full project plan with 11-step implementation sequence and stakeholder requirements traceability
-- Wrote internal planning docs: decision rationale, 10 risks with pivots, 12 assumptions with confidence ratings
+- Received take-home spec. Converted PDF to markdown, broke into 5 reference documents in `docs/spec/`
+- Read every stakeholder interview line by line, extracted implicit requirements and constraints
+- Created 11-step implementation plan ordered to front-load risk (OCR accuracy, performance, field extraction validated first)
+- Key architecture decisions: Next.js (TypeScript) full-stack, local OCR (no cloud APIs), Azure Container Apps, shadcn/ui + Tailwind
+- Wrote planning documents: `docs/considerations/rationale.md` (decision tree), `risks.md` (10 risks with pivots), `assumptions.md` (12 assumptions with confidence ratings)
 - Created skeleton submission docs (README, APPROACH.md, ARCHITECTURE.md) as living documents
-- Set up AI tooling: MCP server documentation, Context7 library IDs for all 6 stack libraries, Cursor rules
-- Expanded test label strategy: sourced 3 real COLA datasets from TTB Public Registry, generated 5 AI test labels covering pass/fail scenarios
-- Full repo audit: verified all cross-references, replaced Python .gitignore, created .env.example
+- Sourced test data: 3 real COLA datasets from TTB Public Registry, generated 5 AI test labels covering pass/fail scenarios
+- Replaced Python `.gitignore`, created `.env.example`
 
-**Next session:** Begin step 2 -- scaffold Next.js app with TypeScript, Tailwind CSS, shadcn/ui. Validate Tesseract.js OCR on generated test labels (step 3).
+---
 
-### Session 2 -- `v0.2-scaffold-and-ocr`
+### Session 2 -- Scaffold & OCR Engine (`v0.2-scaffold-and-ocr`)
 
-| | |
-|---|---|
-| **Date** | 2026-02-09 (Monday) |
-| **Time** | ~7:50 PM - 8:30 PM MST (~40 min) |
-| **Phase** | Implementation -- Steps 2 & 3 |
-| **Plan steps completed** | Step 2 (project init), Step 3 (OCR engine) |
-| **Commit** | `v0.2-scaffold-and-ocr` |
+**2026-02-09 (Monday), ~7:50 PM - 8:30 PM MST (~40 min)**
 
-**What was done:**
-- Scaffolded Next.js 16.1.6 with TypeScript, Tailwind CSS v4, App Router, src/ directory
-- Installed and configured: Tesseract.js, sharp, string-similarity-js, shadcn/ui (button, card, badge, progress, separator)
-- Configured next.config.ts for Turbopack (Next.js 16 default) + webpack fallback for Tesseract.js
-- Created complete TypeScript interfaces in `src/lib/types.ts` (OcrResult, ExtractedFields, FieldResult, ApplicationData, VerificationResult, API request/response types)
-- Set up full folder structure: `src/lib/ocr/`, `src/lib/extraction/`, `src/lib/verification/`, `src/app/api/` routes, `src/app/batch/`, `src/app/about/`
-- Built OCR engine (`src/lib/ocr/engine.ts`): persistent Tesseract.js worker pool (2 workers, scheduler pattern, singleton initialization)
-- Built image preprocessor (`src/lib/ocr/preprocessor.ts`): resize + grayscale + normalize + gentle sharpen
-- **Critical finding during testing:** CLAHE preprocessing destroyed OCR accuracy (16% confidence, garbage text). Removed CLAHE; light-touch pipeline (resize + grayscale + normalize) achieves 85-95% confidence.
-- Ran full OCR validation against all 5 test labels: **Risk #1 VALIDATED** (avg 85.6% confidence), **Assumption A2 VALIDATED** (max 990ms, well under 5s budget)
-- Verified production build passes (`next build` succeeds)
-- Zero linter errors across all new files
+- Scaffolded Next.js 16 with TypeScript, Tailwind CSS v4, shadcn/ui
+- Built OCR engine: persistent Tesseract.js worker pool (2 workers, scheduler pattern, singleton init)
+- Built image preprocessor: resize + grayscale + normalize + sharpen via `sharp`
+- **Key finding:** CLAHE preprocessing destroyed OCR accuracy (16% confidence, garbage text). Removed it; light-touch pipeline achieves 85-95% confidence.
+- Validated on all 5 test labels: avg 85.6% confidence, max 990ms. Risk #1 (OCR accuracy) and Assumption A2 (performance) validated.
 
-**OCR test results (all PASS):**
-| Label | Confidence | Time | Key text extracted |
-|---|---|---|---|
-| compliant-label.png | 93% | 649ms | All fields correct |
-| wrong-abv.png | 91% | 623ms | "40% Alc./Vol." correctly captured |
-| missing-warning.png | 92% | 415ms | No warning text (correct) |
-| wrong-warning-case.png | 77% | 628ms | "Government Warning:" title case captured |
-| brand-case-mismatch.png | 75% | 990ms | "OLD TOM" and wine fields captured |
+---
 
-**Next session:** Step 4 (field extraction) and step 5 (verification logic) -- parse OCR text into structured fields and build the comparison engine.
+### Session 3 -- Field Extraction & Verification (`v0.3-extraction-and-verification`)
 
-### Session 3 -- `v0.3-extraction-and-verification`
+**2026-02-09 (Monday), continuation (~30 min)**
 
-| | |
-|---|---|
-| **Date** | 2026-02-09 (Monday) |
-| **Time** | Continuation of session 2 (~30 min) |
-| **Phase** | Implementation -- Steps 4 & 5 |
-| **Plan steps completed** | Step 4 (field extraction), Step 5 (verification logic) |
-| **Commit** | `v0.3-extraction-and-verification` |
+- Built field extraction: regex patterns for ABV, net contents, government warning, producer, origin, 40+ class/type keywords
+- Built verification engine: fuzzy matching (85% threshold), numeric normalization (ABV/volume), exact government warning validation (4-check: present, all-caps prefix, both sentences, body text match)
+- Built end-to-end pipeline test script
+- **Key finding:** Decorative brand name fonts unreadable with single-pass Tesseract. *(Resolved later in Session 7.)*
+- 5/5 pipeline tests pass. Risk #3 (field extraction) and Risk #4 (warning detection) validated.
 
-**What was done:**
-- Built `src/lib/extraction/patterns.ts`: regex patterns for ABV, net contents, government warning, producer info, country of origin, and a keyword list of 40+ class/type designations
-- Built `src/lib/extraction/fieldExtractor.ts`: parses OCR text into structured ExtractedFields using regex + heuristic strategies for each field, OCR confidence scaling
-- Built `src/lib/verification/fuzzyMatch.ts`: text normalization (case, punctuation, whitespace) + string similarity comparison with configurable threshold (default 85%)
-- Built `src/lib/verification/normalizers.ts`: ABV numeric extraction (handles OCR artifact "135%" → "13.5%"), net contents volume normalization with unit conversion (mL/L/oz)
-- Built `src/lib/verification/warningValidator.ts`: 4-check validation (present, prefix all caps, sentence 1 present, sentence 2 present, body text similarity)
-- Built `src/lib/verification/comparator.ts`: dispatches each field to appropriate comparison strategy (fuzzy/numeric/exact) and produces per-field pass/fail results
-- Built `scripts/test-pipeline.ts`: full end-to-end pipeline test (image → preprocess → OCR → extraction → verification)
-- **Critical finding (at this stage):** Decorative brand name fonts were unreadable by Tesseract OCR with the initial single-pass pipeline. *(Later resolved in Session 7 with multi-pass OCR: explicit PSM 3 initialization + high-contrast threshold + color inversion. All brands now detected across 59 test labels.)*
-- **ABV fix:** OCR artifact "135%" (missing decimal) handled by normalizer: values >100% auto-corrected to "13.5%"
-- **5/5 pipeline tests pass.** Risk #3 (field extraction) and Risk #4 (warning detection) VALIDATED.
+---
 
-**Pipeline test results (all CORRECT):**
-| Label | Expected | Got | Key findings |
-|---|---|---|---|
-| compliant-label.png | fail (brand unreadable) | fail | All fields except brand pass. Warning: 100% match. |
-| wrong-abv.png | fail (ABV mismatch) | fail | 40% vs 45% correctly caught |
-| wrong-warning-case.png | fail (title case warning) | fail | "Government Warning:" title case correctly rejected |
-| brand-case-mismatch.png | fail (brand + OCR quality) | fail | ABV "135%"→"13.5%" fix works. Bottle background degrades warning OCR. |
-| missing-warning.png | fail (no warning) | fail | All fields PASS except warning correctly flagged missing |
+### Session 4 -- API Routes (`v0.4-api-routes`)
 
-**Known limitation documented:** Brand names in decorative/stylized fonts were the weakest point at this stage. *(Later resolved in Session 7 with multi-pass OCR: PSM initialization fix + high-contrast threshold + color inversion. Brand detection improved to 100% across all 59 test labels.)*
+**2026-02-10 (Tuesday)**
 
-**Next session:** Step 6 (API routes) and step 7 (UI) -- wire up endpoints and build the single-label verification interface.
+- Built 3 API routes: `POST /api/extract`, `POST /api/verify`, `POST /api/batch`
+- Fixed Tesseract.js Turbopack module resolution (explicit `workerPath` + `serverExternalPackages`)
+- Tested via curl: extract 991ms, verify 1ms, both return correct JSON
 
-### Session 4 -- `v0.4-api-routes`
+---
 
-| | |
-|---|---|
-| **Date** | 2026-02-10 (Tuesday) |
-| **Time** | Continuation session |
-| **Phase** | Implementation -- Step 6 |
-| **Plan steps completed** | Step 6 (API routes) |
-| **Commit** | `v0.4-api-routes` |
+### Session 5 -- Single-Label UI (`v0.5-single-label-ui`)
 
-**What was done:**
-- Built `POST /api/extract` route: accepts multipart image upload, validates file type/size, runs preprocessing + OCR + field extraction, returns structured ExtractedFields JSON
-- Built `POST /api/verify` route: accepts extracted fields + application data JSON, runs field-by-field comparison, returns per-field pass/fail with confidence scores
-- Built `POST /api/batch` route: accepts multiple image uploads, processes in parallel batches of 3, returns extraction results per file
-- **Fixed Tesseract.js Turbopack issue:** Worker script path resolved to `C:\ROOT\` instead of project path. Fixed with explicit `workerPath` in createWorker() + added `tesseract.js` and `sharp` to `serverExternalPackages` in next.config.ts
-- Tested both `/api/extract` and `/api/verify` via curl against running dev server: both return correct JSON responses
-- Extract endpoint: 991ms for missing-warning.png, all fields correct
-- Verify endpoint: 1ms verification, correctly identifies missing government warning
-- Production build passes with all 3 routes showing as dynamic endpoints
+**2026-02-10 (Tuesday)**
 
-**Next session:** Step 7 -- single-label verification UI (the shippable MVP).
+- Built complete single-label verification flow: drag-and-drop upload, application form, extracted fields with confidence scores, color-coded pass/fail results
+- Built About page ("How It Works") and batch placeholder
+- Tested end-to-end in browser: uploaded label, OCR extracted fields in 695ms, verification correctly showed 4 PASS + 1 FAIL
 
-### Session 5 -- `v0.5-single-label-ui`
+**This was the shippable MVP** per spec: "A working core application with clean code is preferred over ambitious but incomplete features."
 
-| | |
-|---|---|
-| **Date** | 2026-02-10 (Tuesday) |
-| **Phase** | Implementation -- Step 7 |
-| **Plan steps completed** | Step 7 (single-label verification UI) |
-| **Commit** | `v0.5-single-label-ui` |
+---
 
-**What was done:**
-- Built app layout with header/nav (TTB branding, 3 nav items: Verify Label, Batch Upload, How It Works)
-- Built `LabelUploader` component: drag-and-drop + file picker, image preview, file validation, disabled state during processing
-- Built `ApplicationForm` component: 6 input fields (brand, class/type, ABV, net contents, producer, origin) + government warning textarea with "Fill standard warning" helper button
-- Built `ExtractedFields` component: displays OCR results per field with confidence badges ("not found" for missing fields)
-- Built `VerificationResults` component: color-coded pass/fail per field (green checkmarks, red X), overall badge (PASS/FAIL with count), comparison method tags (fuzzy/numeric/exact), confidence percentages
-- Built main `page.tsx`: 3-step flow (upload -> extract -> verify) with state management, loading states, error handling, and reset
-- Built About page: 3-card explanation of how the tool works + technical details section
-- Built Batch placeholder page (API ready, UI to be expanded in step 8)
-- Added shadcn/ui components: input, label, textarea, alert
-- **Tested full end-to-end flow in browser**: uploaded missing-warning.png, OCR extracted all fields in 695ms, filled application data, verified -- correctly showed 4 PASS (brand, class, ABV, volume) + 1 FAIL (government warning not found). UI is clean, professional, and accessible.
+### Session 6 -- Batch Upload UI (`v0.6-batch-ui`)
 
-**This is the shippable MVP.** Per the spec: "A working core application with clean code is preferred over ambitious but incomplete features."
+**2026-02-10 (Tuesday)**
 
-**Next session:** Step 8 (batch upload UI), then steps 9-11 (test labels refinement, deployment, final documentation).
+- Built batch upload page: multi-file drag-and-drop, parallel processing (3 concurrent), progress bar, summary results table
+- Per-file error handling, field count per label, clear/reset functionality
 
-### Session 6 -- `v0.6-batch-ui`
+---
 
-| | |
-|---|---|
-| **Date** | 2026-02-10 (Tuesday) |
-| **Phase** | Implementation -- Step 8 |
-| **Plan steps completed** | Step 8 (batch upload UI) |
-| **Commit** | `v0.6-batch-ui` |
+### Session 7 -- Deploy Prep, Docker, Docs (`v0.7-deploy-ready`)
 
-**What was done:**
-- Built full batch upload page at `/batch`: multi-file drag-and-drop + file picker, parallel processing with progress bar, summary results table
-- Client-side batching: processes 3 images concurrently via individual `/api/extract` calls for real-time progress tracking
-- Results table shows: filename, extracted brand/type/ABV/volume, warning presence (green/red), success/fail icons
-- Error handling: per-file errors shown inline, overall error banner for network issues
-- Clear/reset functionality
-- Build passes, zero lint errors
+**2026-02-10 (Tuesday)**
 
-**Next session:** Steps 9-11 (test labels refinement, deployment, final documentation polish).
+- Created Dockerfile (multi-stage build, node:20-slim, non-root user, standalone output)
+- Final documentation pass: filled all tool versions, updated README
+- All 11 original plan steps complete
 
-### Session 7 -- `v0.7-deploy-ready`
+---
 
-| | |
-|---|---|
-| **Date** | 2026-02-10 (Tuesday) |
-| **Phase** | Implementation -- Steps 9, 10, 11 |
-| **Plan steps completed** | Step 9 (test labels -- verified), Step 10 (deploy prep), Step 11 (final docs) |
-| **Commit** | `v0.7-deploy-ready` |
+### Session 8 -- Azure Deployment (`v0.9-deployed`)
 
-**What was done:**
-- Verified test labels are complete (5 generated labels with documented expected results, 3 COLA reference datasets)
-- Created `Dockerfile` (multi-stage build: deps -> build -> production with node:20-slim, non-root user, standalone output)
-- Enabled `output: "standalone"` in next.config.ts for Docker deployment
-- Final documentation pass: filled all tool versions in APPROACH.md (Next.js 16.1.6, React 19.2.3, Tesseract.js 7.0.0, sharp 0.34.5, etc.), updated README git clone URL
-- All 11 plan steps marked complete
+**2026-02-10 (Tuesday)**
 
-**All plan steps are complete.** The app is ready for Azure deployment. Scott needs to:
-1. Push to GitHub
-2. Run `./scripts/deploy-azure.sh`
-3. Add the live URL to README.md
+- Created `scripts/deploy-azure.sh`: fully config-driven Azure CLI deployment (resource group, ACR, Docker build+push, Container Apps environment, deploy)
+- Deployed to Azure Container Apps (1 vCPU, 2GB RAM, min 1 replica always-on)
+- Fixed Tesseract.js runtime dependencies in Docker (bmp-js, wasm-feature-detect)
+- Verified live: uploaded test label, OCR extracted all fields in 3492ms
+- **Live URL confirmed working**
 
-### Session 8 -- Azure deployment config
+---
 
-| | |
-|---|---|
-| **Date** | 2026-02-10 (Tuesday) |
-| **Time** | Continuation session |
-| **Phase** | Deployment configuration |
-| **Commit** | `v0.8-azure-deploy` |
+### Session 9 -- UI/UX Overhaul & Real COLA Dataset (`v1.1-ux-demo-tests` through `v1.4-ui-overhaul`)
 
-**What was done:**
-- Evaluated hosting options (Railway, Render, Azure). Chose Azure Container Apps: Scott already has a full Azure account, aligns with TTB's Azure infrastructure (Marcus's interview), always-on with no cold start.
-- Created `scripts/deploy-azure.sh`: fully config-driven Azure CLI deployment script (6 steps: resource group, ACR, Docker build+push, Container Apps environment, deploy, get URL). All values overridable via environment variables.
-- Updated Dockerfile comment to be platform-agnostic (works on Azure, Railway, Render, or any Docker host)
-- Updated README: deployment section with Azure primary + Docker fallback instructions, tech stack table updated
-- Updated APPROACH.md: deployment references updated to Azure Container Apps
-
-### Session 9 -- `v0.9-deployed`
-
-| | |
-|---|---|
-| **Date** | 2026-02-10 (Tuesday) |
-| **Time** | Continuation session |
-| **Phase** | Final review, deployment, and verification |
-| **Commit** | `v0.9-deployed` |
-
-**What was done:**
-- Ran 5/5 pipeline tests (all pass)
-- Exhaustive final review of all docs -- found and fixed 10 issues (README placeholders, ARCHITECTURE.md stale types/batch spec, package.json name, test-labels docs, activity log timestamps, string-similarity naming)
-- Deployed to Azure Container Apps:
-  - Created resource group `ttb-label-verification-rg` in eastus
-  - Created Azure Container Registry `ttblabelacr`
-  - Built and pushed Docker image via `az acr build --no-logs` (workaround: Azure CLI Unicode crash on Windows with Next.js output)
-  - Created Container Apps environment `ttb-label-env`
-  - Deployed container with 1 vCPU / 2GB RAM, min 1 replica (always-on)
-  - Fixed missing Tesseract.js runtime dependencies in Dockerfile (bmp-js, wasm-feature-detect) by copying full node_modules
-  - Added `.dockerignore` to exclude .next build cache, node_modules, .git
-- **Verified live deployment via browser**: uploaded test label, OCR extracted all fields in 3492ms (cold start), all fields correct
-- Updated README with deployed URL
-
-**Deployment URL:** https://ttb-label-verification.delightfulbeach-49152395.eastus.azurecontainerapps.io
-
-### Session 10 -- `v1.0-release`
-
-| | |
-|---|---|
-| **Date** | 2026-02-10 (Tuesday) |
-| **Time** | Continuation session |
-| **Phase** | Final polish for delivery |
-| **Commit** | `v1.0-release` |
-
-**What was done:**
-- Took 3 screenshots of the live deployed app (home, extraction results with OCR fields, verification results with pass/fail)
-- Rewrote README for professional delivery: added screenshots, Documentation Guide table (maps evaluator questions to docs), version numbers in tech stack, expanded project structure with inline descriptions, trade-offs as a table, cleaner closing
-- Added links to ACTIVITY_LOG.md and all consideration docs from README so evaluators can navigate the full documentation
-- Moved screenshots to `docs/screenshots/` for clean organization
-
-- **2026-02-10 ~6:12 PM** -- Expanded `public/test-labels/real/` from placeholder state to a balanced public dataset of 54 real labels (18 distilled spirits, 18 wine, 18 malt beverage) sourced from TTB COLAs Online printable attachments. Added `scripts/collect_public_labels.py`, generated `real/metadata.json`, updated `public/test-labels/README.md`, and cleaned folder contents to match metadata exactly.
-
-### Session 11 -- `v1.1-ux-demo-tests`
-
-| | |
-|---|---|
-| **Date** | 2026-02-10 / 2026-02-11 |
-| **Time** | Multi-session continuation |
-| **Phase** | UX improvements, demo mode, test framework, real labels |
-| **Commit** | `v1.1-ux-demo-tests` |
-
-**What was done:**
+**2026-02-10 - 2026-02-11 (multi-session)**
 
 Real label dataset:
-- Built `scripts/collect_public_labels.py` to automate collection from TTB COLAs Online
-- Downloaded 54 real label images into `public/test-labels/real/` (18 spirits, 18 wine, 18 malt beverage)
-- Added `public/test-labels/real/metadata.json` with TTB IDs, category, class/type, origin, source URLs
-
-UX improvements (found during manual testing with Scott):
-- Replaced browser `alert()` with inline error UI in LabelUploader (file type + size validation)
-- Added label image reference with click-to-enlarge lightbox below the application form
-- Fixed verify flow: form stays editable after verification, "Re-Verify With Updated Data" button replaces one-shot verify
-- Added "New Label" button always visible in top-right after extraction
-- Example label picker stays visible throughout the flow (not just on upload step)
-- Lightbox uses raw public URL for full-resolution display, `unoptimized` Image thumbnails
-
-Demo mode:
-- "Fill Demo Data" button directly on ApplicationForm (self-contained, matches OCR class/type to correct test data)
-- Button pulses amber when form is empty, shows "Re-fill Demo Data" when form has values
-- Debug console logs OCR timing, field count, warning status, per-field verification results
-- Batch page "Load All 5 Example Labels" button in demo mode
-
-Testing:
-- Added vitest test framework (39 unit tests across 4 files: fuzzy match, normalizers, warning validator, field extractor)
-- Added `scripts/test-ui-flow.ts` integration test (API-level flow testing: 4 label scenarios + batch + re-verify) -- ALL PASSED
-- Added transparency statement in APPROACH.md explaining AI-assisted development process
-- Added TTB label research doc (`docs/label-research-requirements.md`) from ttb.gov labeling resources
-
-### Session 12 -- `v1.3-full-validation`
-
-| | |
-|---|---|
-| **Date** | 2026-02-11 (Tuesday) |
-| **Time** | Continuation session |
-| **Phase** | Full validation of all demo labels |
-| **Commit** | `v1.3-full-validation` |
-
-**What was done:**
-- Built unified `demo-labels.json` catalog: 59 entries (5 generated + 54 real COLA) with complete applicationData per label
-- Generated from COLA metadata via `scripts/generate-demo-labels.ts` (reproducible)
-- Populated ABV values for all 54 real labels: 43 correct, 11 intentionally wrong for test variety
-- Beer/malt labels use 12 oz net contents, spirits/wine use 750 mL
-- Ran ALL 59 labels through extract API + verify API:
-  - Generated labels: 5/5 extract success, avg 5.6 fields found, all verification outcomes correct
-  - Real labels: 54/54 extract success, avg 2.7 fields found (COLA thumbnails, limited OCR)
-  - Zero extraction failures across entire dataset
-- Batch test: 5/5 generated extracted in 2521ms, 10/10 real sample extracted in 10019ms
-- Unit tests: 39/39 passed (4 test files)
-- Pipeline tests: 5/5 correct outcomes
-- Removed Monkey 47 and Lagunitas from earlier 8-label catalog (replaced with full 59)
-- Added `scripts/validate-all-labels.ts` for reproducible full-dataset validation
-
-### Session 13 -- `v1.4-ui-overhaul`
-
-| | |
-|---|---|
-| **Date** | 2026-02-11 (Tuesday) |
-| **Time** | Multi-hour continuation session |
-| **Phase** | UI/UX overhaul, demo system, brand name OCR research |
-| **Commit** | `v1.4-ui-overhaul` |
-
-**What was done:**
+- Built collection script, downloaded 54 real label images from TTB COLAs Online (18 spirits, 18 wine, 18 malt beverage)
+- Built unified `demo-labels.json` catalog: 59 entries with complete application data per label
 
 UI/UX overhaul:
-- Replaced separate OCR fields + form with integrated `LabelComparisonView` component: OCR extracted value and application input on same row per field
-- Inline verification indicators (green checkmarks / red X) replace separate results card
-- Verification summary banner ("VERIFICATION FAILED 6/7 pass") replaces old detailed results component
-- Label image moved to sidebar with click-to-enlarge lightbox (native img tag for full resolution)
-- Re-verify flow: form stays editable after verification, button changes to "Re-Verify With Updated Data"
-- Global CSS: cursor pointer on all buttons
+- Replaced separate OCR display + form with integrated `LabelComparisonView`: extracted value and application input side-by-side per field
+- Inline verification indicators, summary banner, label image sidebar with lightbox
+- Demo mode: "Fill Demo Data" button, compact tabbed picker (Test Scenarios / Real COLA)
+- Replaced browser `alert()` with inline error UI
+- Re-verify flow: form stays editable after verification
 
-Demo system improvements:
-- Compact tabbed picker ("Test Scenarios" / "Real COLA" tabs) in scrollable 180px panel
-- Fill Demo Data button now self-contained in LabelComparisonView -- loads demo-labels.json directly, matches by extracted class type as fallback when page state is lost
-- Fixed demoPrefill state persistence -- no longer cleared on re-selection, only on explicit reset
-
-Batch results:
-- Replaced flat text summary with structured 2-column grid per label showing each field extraction status
-- Government warning: "present on label" vs "NOT detected on label" (no more ambiguous "Warning: found")
-- Field count per label ("5/7 fields")
-
-Research:
-- Identified root cause of brand name OCR failure: Tesseract trained on dark-on-light, brand names are light-on-dark (bottle glass background)
-- Researched solutions: color inversion preprocessing (zero deps) + PaddleOCR ONNX fallback (@gutenye/ocr-node)
-- Created plan: `.cursor/plans/fix_brand_name_ocr_07eaae72.plan.md` for multi-pass OCR with inversion
-
-**Completed next session:** Brand name OCR fix (multi-pass engine, Session 7 below).
+Testing infrastructure:
+- Added vitest framework (39 unit tests across 4 test files)
+- Added integration test script (4 label scenarios + batch + re-verify)
+- Added TTB label research document from ttb.gov labeling resources
 
 ---
 
-### Session 7: Multi-Pass OCR Engine + Real COLA Validation
+### Session 10 -- Multi-Pass OCR Engine & ONNX PaddleOCR
 
-**Time:** Feb 11, 2026 ~4:50 PM – ~6:30 PM MST (1h40m)
-**Who:** Scott + AI agent
+**2026-02-11 (Tuesday, multi-session)**
 
-**What was done:**
+Multi-pass OCR engine:
+- Discovered Tesseract.js PSM initialization bug: workers skip large decorative text unless `tessedit_pageseg_mode: "3"` is set explicitly. This single fix recovered brand names.
+- Built 3-pass preprocessing: normal, high-contrast threshold, color inversion at 2000px
+- **Integrated ONNX PaddleOCR** (PP-OCRv4 via multilingual-purejs-ocr) as primary engine. Dramatically better on dark backgrounds, decorative fonts, and complex layouts. Tesseract.js became the conditional fallback.
+- Fixed case-sensitive field merge: ONNX reads "wARNING" but Tesseract gets correct "WARNING". Added preference logic for case-sensitive fields.
 
-Multi-pass OCR engine (the core fix):
-- Discovered Tesseract.js PSM initialization bug: workers skip large decorative text unless `setParameters({ tessedit_pageseg_mode: "3" })` is called explicitly. This single fix recovered "OLD TOM DISTILLERY" on the first pass.
-- Fixed `cleanOcrText()` newline destruction: `^\s+|\s+$/gm` regex was consuming `\n` characters. Changed to `^[^\S\n]+|[^\S\n]+$/gm` to only trim horizontal whitespace per line.
-- Built 3-pass preprocessing pipeline in `engine.ts`:
-  - Pass 1: Normal (resize 1200px + normalize) for standard dark-on-light labels
-  - Pass 2: High-contrast binary threshold -- recovers oversized decorative fonts
-  - Pass 3: Color inversion at 2000px -- for light-on-dark labels (Casamigos, Corte Adagio)
-- Smart fallback logic: skips Pass 3 if Pass 2 gained nothing and Pass 1 already found 3+ fields
-- Added `countFields()` and `mergeFields()` helpers to pick the best result across passes
-
-Real COLA pattern expansion:
-- ABV: Added "ALC X% BY VOL", "X% ALC/VOL", "ALC. / VOL." patterns (Barrilito, Casamigos, South Bank, Woodford formats)
-- Producer: Added "IMPORTED BY:" and "Crafted" patterns (Barrilito, Filadoro)
-- Net contents: Added "FL.OZ", "FL OZ", "NET WT" patterns
-- Class/type: Expanded from ~40 to 60+ keywords (Ale, Beer, Cerveza, Near Beer, Dry Gin, Anejo, Reposado, Blanco, Sangiovese, Tempranillo, etc.)
-- Origin: Improved to handle "PRODUCT OF" across line breaks
-
-Comprehensive testing:
-- Full 59-label API sweep (5 generated + 54 real COLA): all under 5s, avg 1.7s
-- Generated labels: 6.4/7 avg fields, 100% brand detection
-- Real COLA: 3.2/7 avg fields, 100% brand, 80% class/type, 37% ABV
-- Best real performers: Filadoro wine (7/7), Pietro Rinaldi (6/7), Lafayette whiskey (6/7), Azienda Agricola (5-6/7)
-- Browser UI verified: Filadoro and Pietro Rinaldi tested end-to-end with screenshots
-
-Demo data & documentation updates:
-- Updated `demo-labels.json` expectedResults for all 5 generated labels (reflected brand name fix)
-- Added `featured: true` flag + hand-verified applicationData for 4 real COLA labels (Filadoro, Lafayette, Sortilege, Casamigos)
-- Updated `risks.md`: Risk #1 downgraded from HIGH to MEDIUM (mitigated) with full multi-pass strategy description
-- Updated `APPROACH.md`: "Image Preprocessing" section rewritten with 3-pass strategy, PSM fix, expanded patterns, and test results
-- Updated `about/page.tsx`: "AI Extracts Text", "Technical Details", and "Known Limitations" reflect multi-pass OCR
-
-**Files changed (9):** `engine.ts`, `preprocessor.ts`, `fieldExtractor.ts`, `patterns.ts`, `demo-labels.json`, `risks.md`, `APPROACH.md`, `about/page.tsx`, `ACTIVITY_LOG.md`
-
-**Completed next session:** ONNX PaddleOCR dual-engine integration (Session 8 below).
+Results: Brand name detection reached 100% across all 59 labels. Generated labels averaged 6.4/7 fields. Best real COLA labels hit 7/7.
 
 ---
 
-### Session 8: ONNX PaddleOCR Integration + Full Doc Alignment
+### Session 11 -- Universal Extraction Overhaul
 
-**Time:** Feb 11, 2026 ~7:00 PM – ~8:00 PM MST (1h)
-**Who:** Scott + AI agent
+**2026-02-12 (Thursday, ~11:00 PM MST)**
 
-**What was done:**
+After Session 10's incremental pattern expansion (hardcoded country lists, international warning patterns, loosened test assertions), we identified a fundamental problem: **the pipeline had been overfitted to our 59 test labels.** This would not scale to 150K+ labels and would look bad to an evaluator.
 
-ONNX PaddleOCR integration (the major accuracy upgrade):
-- Installed `multilingual-purejs-ocr` -- ONNX PaddleOCR PP-OCRv4, 100% local, zero cloud API, zero Python dependency
-- Built `src/lib/ocr/onnx.ts`: singleton engine wrapper with lazy init, temp file management, paragraph-grouped text output
-- Rewrote `src/lib/ocr/engine.ts` with `best` field accumulator: ONNX primary → Tesseract normal → threshold/inversion passes, each merging into accumulated best result
-- Fixed field loss bug: ONNX results (e.g. "CORTE ADAGIO") were being overwritten by Tesseract fallback. Restructured to persistent `best` variable.
-- Added `ABV_PATTERN_MIN` for ONNX-split "ALC X%" without vol suffix
-- Added `NET_CONTENTS_PATTERN_ALT` for OCR-truncated "750m" (missing L)
-- Changed multi-pass threshold from >=5 to >=7 (always try pass 2 unless perfect)
-- Updated `next.config.ts`: added `multilingual-purejs-ocr` and `onnxruntime-node` to serverExternalPackages
+This session stripped everything back to universal principles:
 
-Test results (9-label benchmark, ONNX + Tesseract merged):
-- Compliant: 7/7, Filadoro: 7/7, brand-mismatch: 6/7, missing-warning: 6/7
-- Casamigos (dark bg): 4/7, Barrilito: 5/7 (+ABV), South Bank: 4/7 (+class +net)
-- Corte Adagio (dark bg): 2/7 (brand + class -- was 1/7 with Tesseract alone)
-- Monkey 47 (complex): 3/7 (class + ABV -- was 1/7 with Tesseract alone)
-- Speed: 1.5-5.5s per label, all under 5.5s
+**Removed:** 57 hardcoded countries, international warning patterns, reversed ABV pattern, CLAHE preprocessing, Italian wine classifications, marketing terms from class/type, brand name hack exclusions
 
-Full documentation alignment (58 issues fixed across 10 files):
-- README.md: tech stack, workflow description, trade-offs, production roadmap
-- APPROACH.md: OCR strategy, tools table, assumptions, trade-offs
-- ARCHITECTURE.md: diagrams, module table, sequence flows
-- about/page.tsx: Step 2 card, technical details, limitations
-- risks.md, assumptions.md, rationale.md: all updated for dual-engine
-- Every reference to "Tesseract.js only" replaced with dual-engine description
-- All 39 unit tests pass
+**Rebuilt:** Extraction order (warning first, brand last with ConsumedLines tracker), strict government warning validation, simplified OCR (max 3 passes), TTB-taxonomy-only class/type keywords, strict test assertions
 
-**Files changed:** `onnx.ts` (new), `engine.ts`, `preprocessor.ts`, `fieldExtractor.ts`, `patterns.ts`, `next.config.ts`, `package.json`, `README.md`, `APPROACH.md`, `ARCHITECTURE.md`, `about/page.tsx`, `risks.md`, `assumptions.md`, `rationale.md`, `ACTIVITY_LOG.md`
-
-**Pending:** Azure redeploy with dual OCR engine (v8)
+**Result:** Honest numbers. 59/59 passing, 3.9/7 avg fields on real COLA. The system correctly reports "I found what I could" rather than fabricating matches through regex hacks.
 
 ---
 
-### Session 9: Merge Quality Fix + Dynamic Field Architecture
+### Session 12 -- Documentation Alignment & Final Commit (`v2.0-universal-extraction`)
 
-**Time:** Feb 11, 2026 ~8:00 PM – ~8:15 PM MST (15m)
-**Who:** Scott + AI agent
+**2026-02-12 (Thursday, ~11:45 PM MST)**
 
-**What was done:**
+Full documentation audit against the spec and codebase. Found and fixed 12 inconsistencies:
+- Removed false claim about degraded test images (directory never existed)
+- Fixed 6 stale "Tesseract-only" references across rationale.md, risks.md
+- Fixed 3 architecture diagram inaccuracies (denoise, participant order, noise reduction)
+- Updated assumptions.md summary table
+- Added "How do I use this tool?" to README Documentation Guide
+- Removed `.cursor/` IDE config files from repo (internal tooling, not deliverables)
 
-Case-sensitive field merge fix:
-- Discovered ONNX PaddleOCR reads "GOVERNMENT wARNING:" (lowercase w) which fails the all-caps validation
-- Root cause: `mergeFields` used overall OCR confidence (ONNX 96% vs Tesseract 95%), keeping ONNX's typo
-- Fix: added `CASE_SENSITIVE_FIELDS` set -- for these fields, Tesseract's version is preferred if within 20% confidence of ONNX
-- Ensures correct "GOVERNMENT WARNING:" (Tesseract) always wins over "wARNING" (ONNX)
+Squashed all local commits into single `v2.0-universal-extraction` for clean history.
 
-Dynamic field architecture:
-- Removed all hardcoded "7" references from engine.ts
-- Added `FIELD_KEYS` array as single source of truth for extractable fields
-- Added `TOTAL_FIELDS = FIELD_KEYS.length` used in all thresholds and logs
-- System now adapts automatically when new fields are added (e.g., vintage year, sulfite declaration, age statement for beverage-type-specific requirements)
-
-Comprehensive testing:
-- API sweep: 6 labels, all gov warning prefixes "GOVERNMENT WARNING:" (correct caps) ✓
-- Batch API: 3 labels processed, all warnings correct ✓
-- Verify API: Compliant label 7/7 PASS including warning at 100% match ✓
-- All 39 unit tests pass ✓
-- All labels under 5.5s SLA ✓
-
-**Files changed:** `engine.ts`, `ACTIVITY_LOG.md`
-
-**Pending:** Azure redeploy with dual OCR engine (v8)
+---
